@@ -497,6 +497,6 @@ Configurado para permitir:
 
 ---
 
-**Última actualización**: 2024
+**Última actualización**: 14 de noviembre de 2025
 
 

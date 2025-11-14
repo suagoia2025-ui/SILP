@@ -346,5 +346,7 @@ Para preguntas o soporte, contacta al equipo de desarrollo.
 
 ---
 
+**Última actualización**: 14 de noviembre de 2025
+
 **Desarrollado con ❤️ para la gestión eficiente de contactos y líderes**
 
