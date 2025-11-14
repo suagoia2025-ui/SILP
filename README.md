@@ -1,0 +1,331 @@
+# SILP - Sistema de Integración de Líderes Privada
+
+SILP es una aplicación web completa para la gestión de contactos y usuarios con un sistema robusto de roles y permisos. El sistema permite a líderes, administradores y superadministradores gestionar contactos de manera eficiente y segura.
+
+## 📋 Tabla de Contenidos
+
+- [Características](#-características)
+- [Tecnologías](#-tecnologías)
+- [Arquitectura](#-arquitectura)
+- [Requisitos Previos](#-requisitos-previos)
+- [Instalación](#-instalación)
+- [Configuración](#-configuración)
+- [Uso](#-uso)
+- [Estructura del Proyecto](#-estructura-del-proyecto)
+- [Documentación Adicional](#-documentación-adicional)
+- [Contribución](#-contribución)
+
+## ✨ Características
+
+### Sistema de Autenticación
+- ✅ Autenticación basada en JWT (JSON Web Tokens)
+- ✅ Recuperación de contraseña por correo electrónico
+- ✅ Gestión de sesiones con tokens de acceso
+- ✅ Renovación automática de tokens
+- ✅ Advertencia de sesión antes de expirar (5 minutos antes)
+- ✅ Protección de rutas basada en roles
+
+### Gestión de Usuarios
+- ✅ Sistema de roles: `superadmin`, `admin`, `lider`
+- ✅ CRUD completo de usuarios (solo para superadmin)
+- ✅ Búsqueda y filtrado de usuarios
+- ✅ Validación de permisos en backend y frontend
+
+### Gestión de Contactos
+- ✅ CRUD completo de contactos
+- ✅ Búsqueda en tiempo real con debounce
+- ✅ Permisos granulares:
+  - **Líderes**: Solo pueden ver y gestionar sus propios contactos
+  - **Superadmin**: Acceso a todos los contactos del sistema
+- ✅ Información completa: nombre, email, teléfono, dirección, municipio, ocupación
+
+### Datos de Referencia
+- ✅ Gestión de municipios y departamentos
+- ✅ Catálogo de ocupaciones
+- ✅ Relaciones entre entidades
+
+## 🛠 Tecnologías
+
+### Backend
+- **FastAPI**: Framework web moderno y rápido para Python
+- **SQLAlchemy**: ORM para gestión de base de datos
+- **PostgreSQL**: Base de datos relacional
+- **JWT**: Autenticación con tokens
+- **Bcrypt**: Hash de contraseñas
+- **Pydantic**: Validación de datos
+- **FastAPI-Mail**: Envío de correos electrónicos
+
+### Frontend
+- **React 18**: Biblioteca de JavaScript para interfaces de usuario
+- **Material-UI (MUI)**: Componentes de interfaz modernos
+- **React Router**: Enrutamiento del lado del cliente
+- **Axios**: Cliente HTTP para peticiones API
+- **Vite**: Herramienta de construcción rápida
+- **JWT-Decode**: Decodificación de tokens JWT
+
+## 🏗 Arquitectura
+
+El proyecto sigue una arquitectura de **cliente-servidor** con separación clara entre frontend y backend:
+
+```
+┌─────────────────┐         ┌─────────────────┐
+│   Frontend      │────────▶│    Backend       │
+│   (React)       │  HTTP   │   (FastAPI)      │
+│   Puerto 5173   │         │   Puerto 8000    │
+└─────────────────┘         └─────────────────┘
+                                      │
+                                      ▼
+                            ┌─────────────────┐
+                            │   PostgreSQL    │
+                            │   Base de Datos │
+                            └─────────────────┘
+```
+
+### Flujo de Autenticación
+
+1. Usuario inicia sesión con email y contraseña
+2. Backend valida credenciales y genera token JWT
+3. Frontend almacena token en localStorage
+4. Token se incluye en todas las peticiones subsecuentes
+5. Backend valida token en cada request protegido
+
+Para más detalles sobre la arquitectura, consulta [ARCHITECTURE.md](./ARCHITECTURE.md).
+
+## 📦 Requisitos Previos
+
+Antes de comenzar, asegúrate de tener instalado:
+
+- **Python 3.13** o superior
+- **Node.js 18** o superior
+- **PostgreSQL 12** o superior
+- **npm** o **yarn**
+- **Git**
+
+## 🚀 Instalación
+
+### 1. Clonar el Repositorio
+
+```bash
+git clone <url-del-repositorio>
+cd SILP
+```
+
+### 2. Configurar el Backend
+
+```bash
+# Desde la raíz del proyecto SILP:
+cd silp_backend
+
+# Crear entorno virtual
+python -m venv venv
+
+# Activar entorno virtual
+# En Windows:
+venv\Scripts\activate
+# En macOS/Linux:
+source venv/bin/activate
+
+# Instalar dependencias
+pip install fastapi uvicorn sqlalchemy psycopg2-binary python-dotenv python-jose[cryptography] passlib[bcrypt] pydantic[email] fastapi-mail
+```
+
+### 3. Configurar la Base de Datos
+
+La base de datos `db_provida_uf` ya debe existir en PostgreSQL. Si necesitas ejecutar el script de inicialización:
+
+```bash
+# Ejecutar script SQL en la base de datos existente
+# Desde la raíz del proyecto SILP:
+psql -d db_provida_uf -f silp_backend/db_provida_uf.sql
+
+# O desde dentro de silp_backend:
+cd silp_backend
+psql -d db_provida_uf -f db_provida_uf.sql
+```
+
+**Nota**: Si la base de datos no existe, créala primero con:
+```bash
+createdb db_provida_uf
+```
+
+### 4. Configurar Variables de Entorno
+
+Crea un archivo `.env` en `silp_backend/` con el siguiente contenido:
+
+```env
+DATABASE_URL=postgresql://usuario:contraseña@localhost:5432/db_provida_uf
+SECRET_KEY=tu-clave-secreta-super-segura-aqui
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+PASSWORD_RESET_TOKEN_EXPIRE_MINUTES=60
+
+# Configuración de correo (para recuperación de contraseña)
+MAIL_USERNAME=tu-usuario-mailtrap
+MAIL_PASSWORD=tu-contraseña-mailtrap
+MAIL_FROM=tu-email@ejemplo.com
+MAIL_PORT=587
+MAIL_SERVER=smtp.mailtrap.io
+MAIL_FROM_NAME=SILP Sistema
+```
+
+### 5. Configurar el Frontend
+
+```bash
+# Desde la raíz del proyecto SILP:
+cd silp-frontend
+
+# Instalar dependencias
+npm install
+```
+
+## ⚙️ Configuración
+
+### Variables de Entorno del Backend
+
+El archivo `.env` debe contener:
+
+- `DATABASE_URL`: URL de conexión a PostgreSQL
+- `SECRET_KEY`: Clave secreta para firmar tokens JWT (debe ser segura)
+- `ALGORITHM`: Algoritmo de encriptación (HS256)
+- `ACCESS_TOKEN_EXPIRE_MINUTES`: Tiempo de expiración del token de acceso (por defecto: 30 minutos)
+- `PASSWORD_RESET_TOKEN_EXPIRE_MINUTES`: Tiempo de expiración del token de recuperación (por defecto: 60 minutos)
+- `MAIL_*`: Configuración del servidor de correo
+
+### Configuración de CORS
+
+El backend está configurado para aceptar peticiones desde:
+- `http://localhost:5173` (Vite por defecto)
+- `http://localhost:3000` (alternativa)
+
+Si usas otro puerto, modifica `main.py` en el backend.
+
+## 🎯 Uso
+
+### Iniciar el Backend
+
+```bash
+# Desde la raíz del proyecto SILP:
+cd silp_backend
+source venv/bin/activate  # En Windows: venv\Scripts\activate
+uvicorn app.main:app --reload
+```
+
+El backend estará disponible en `http://127.0.0.1:8000`
+
+### Iniciar el Frontend
+
+```bash
+# Desde la raíz del proyecto SILP:
+cd silp-frontend
+npm run dev
+```
+
+El frontend estará disponible en `http://localhost:5173`
+
+### Acceder a la Documentación de la API
+
+Una vez iniciado el backend, puedes acceder a:
+- **Swagger UI**: `http://127.0.0.1:8000/docs`
+- **ReDoc**: `http://127.0.0.1:8000/redoc`
+
+## 📁 Estructura del Proyecto
+
+```
+SILP/
+├── silp_backend/              # Backend FastAPI
+│   ├── app/
+│   │   ├── main.py           # Aplicación principal
+│   │   ├── models.py         # Modelos SQLAlchemy
+│   │   ├── schemas.py        # Esquemas Pydantic
+│   │   ├── crud.py           # Operaciones de base de datos
+│   │   ├── security.py       # Autenticación y seguridad
+│   │   ├── database.py       # Configuración de BD
+│   │   ├── email_utils.py    # Utilidades de correo
+│   │   └── routers/          # Endpoints de la API
+│   │       ├── auth.py
+│   │       ├── users.py
+│   │       ├── contacts.py
+│   │       ├── municipalities.py
+│   │       ├── occupations.py
+│   │       └── password_recovery.py
+│   ├── db_provida_uf.sql     # Script de base de datos
+│   └── README.md             # Documentación del backend
+│
+├── silp-frontend/            # Frontend React
+│   ├── src/
+│   │   ├── App.jsx           # Componente principal
+│   │   ├── Login.jsx         # Página de login
+│   │   ├── Layout.jsx        # Layout principal
+│   │   ├── ContactsPage.jsx  # Gestión de contactos
+│   │   ├── UsersPage.jsx     # Gestión de usuarios
+│   │   └── ...               # Otros componentes
+│   └── README.md             # Documentación del frontend
+│
+├── ARCHITECTURE.md           # Documentación de arquitectura
+└── README.md                 # Este archivo
+```
+
+## 📚 Documentación Adicional
+
+- [Documentación del Backend](./silp_backend/README.md)
+- [Documentación del Frontend](./silp-frontend/README.md)
+- [Documentación de Arquitectura](./ARCHITECTURE.md)
+
+## 👥 Roles y Permisos
+
+### Superadmin
+- ✅ Crear, leer, actualizar y eliminar usuarios
+- ✅ Ver todos los contactos del sistema
+- ✅ Gestionar sus propios contactos
+- ✅ Acceso completo al sistema
+
+### Admin
+- ✅ Gestionar contactos
+- ❌ No puede gestionar usuarios
+
+### Líder
+- ✅ Gestionar solo sus propios contactos
+- ❌ No puede ver contactos de otros usuarios
+- ❌ No puede gestionar usuarios
+
+## 🔒 Seguridad
+
+- Contraseñas hasheadas con bcrypt
+- Tokens JWT con expiración configurable (30 minutos por defecto)
+- Renovación automática de tokens mediante endpoint `/api/v1/refresh-token`
+- Advertencia de sesión 5 minutos antes de expirar
+- Validación de permisos en cada endpoint
+- CORS configurado para orígenes específicos
+- Validación de datos con Pydantic
+- Protección contra SQL injection (SQLAlchemy ORM)
+- Validación de longitud de contraseñas (máximo 72 bytes)
+
+## 🤝 Contribución
+
+Las contribuciones son bienvenidas. Por favor:
+
+1. Fork el proyecto
+2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
+3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
+4. Push a la rama (`git push origin feature/AmazingFeature`)
+5. Abre un Pull Request
+
+### Guías de Contribución
+
+- Sigue las convenciones de código existentes
+- Añade comentarios en español para código complejo
+- Actualiza la documentación según sea necesario
+- Prueba tus cambios antes de hacer commit
+
+## 📝 Licencia
+
+Este proyecto es privado y de uso interno.
+
+## 📧 Contacto
+
+Para preguntas o soporte, contacta al equipo de desarrollo.
+
+---
+
+**Desarrollado con ❤️ para la gestión eficiente de contactos y líderes**
+
