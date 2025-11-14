@@ -30,6 +30,9 @@ SILP es una aplicación web completa para la gestión de contactos y usuarios co
 - ✅ CRUD completo de usuarios (solo para superadmin)
 - ✅ Búsqueda y filtrado de usuarios
 - ✅ Validación de permisos en backend y frontend
+- ✅ Campo `is_active` para activar/desactivar usuarios
+- ✅ Campo `mdv` para referencia alfanumérica personalizada
+- ✅ Visualización en rojo para usuarios inactivos
 
 ### Gestión de Contactos
 - ✅ CRUD completo de contactos
@@ -38,6 +41,9 @@ SILP es una aplicación web completa para la gestión de contactos y usuarios co
   - **Líderes**: Solo pueden ver y gestionar sus propios contactos
   - **Superadmin**: Acceso a todos los contactos del sistema
 - ✅ Información completa: nombre, email, teléfono, dirección, municipio, ocupación
+- ✅ Campo `is_active` para activar/desactivar contactos
+- ✅ Campo `mdv` para referencia alfanumérica personalizada
+- ✅ Visualización en rojo para contactos inactivos
 
 ### Datos de Referencia
 - ✅ Gestión de municipios y departamentos
@@ -148,6 +154,18 @@ psql -d db_provida_uf -f db_provida_uf.sql
 createdb db_provida_uf
 ```
 
+**Migración de campos nuevos (`is_active` y `mdv`):**
+
+Si ya tienes una base de datos existente y necesitas agregar los campos `is_active` y `mdv` a las tablas `users` y `contacts`, ejecuta:
+
+```bash
+# Desde silp_backend:
+cd silp_backend
+PGPASSWORD='tu_contraseña' psql -d db_provida_uf -U tu_usuario -f add_is_active_mdv_columns.sql
+```
+
+Este script agregará las columnas con valores por defecto apropiados.
+
 ### 4. Configurar Variables de Entorno
 
 Crea un archivo `.env` en `silp_backend/` con el siguiente contenido:
@@ -249,6 +267,7 @@ SILP/
 │   │       ├── occupations.py
 │   │       └── password_recovery.py
 │   ├── db_provida_uf.sql     # Script de base de datos
+│   ├── add_is_active_mdv_columns.sql  # Script de migración para nuevos campos
 │   └── README.md             # Documentación del backend
 │
 ├── silp-frontend/            # Frontend React

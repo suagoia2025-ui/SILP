@@ -72,8 +72,10 @@ SILP sigue una arquitectura de **cliente-servidor** con separación clara de res
 App.jsx                    # Router principal y gestión de auth
 ├── Login.jsx             # Autenticación
 ├── Layout.jsx            # Layout con navegación
-├── ContactsPage.jsx      # Gestión de contactos
-├── UsersPage.jsx         # Gestión de usuarios (solo superadmin)
+├── ContactsPage.jsx      # Gestión de contactos (muestra inactivos en rojo)
+├── UsersPage.jsx         # Gestión de usuarios (muestra inactivos en rojo)
+├── ContactForm.jsx       # Formulario de contactos (incluye is_active y mdv)
+├── AddUserForm.jsx       # Formulario de usuarios (incluye is_active y mdv)
 └── [Componentes auxiliares]
 ```
 
@@ -140,7 +142,9 @@ User (users)
 ├── role: String (superadmin|admin|lider)
 ├── address: String (nullable)
 ├── municipality_id: Integer (FK)
-└── occupation_id: Integer (FK, nullable)
+├── occupation_id: Integer (FK, nullable)
+├── is_active: Boolean (default: True)
+└── mdv: String(255) (nullable)
 
 Contact (contacts)
 ├── id: UUID (PK)
@@ -152,7 +156,9 @@ Contact (contacts)
 ├── created_at: Timestamp
 ├── user_id: UUID (FK)
 ├── municipality_id: Integer (FK)
-└── occupation_id: Integer (FK, nullable)
+├── occupation_id: Integer (FK, nullable)
+├── is_active: Boolean (default: True)
+└── mdv: String(255) (nullable)
 ```
 
 ## 🔐 Sistema de Autenticación
@@ -475,6 +481,7 @@ Configurado para permitir:
 
 - PostgreSQL 12+
 - Script de inicialización: `db_provida_uf.sql`
+- Script de migración: `add_is_active_mdv_columns.sql` (para agregar campos `is_active` y `mdv`)
 - Migraciones manuales (considerar Alembic para futuro)
 
 ## 📈 Consideraciones Futuras
