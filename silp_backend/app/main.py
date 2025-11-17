@@ -11,12 +11,18 @@ app = FastAPI(title="SILP API")
 cors_origins_str = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:5173")
 origins = [origin.strip() for origin in cors_origins_str.split(",") if origin.strip()]
 
+# Log para debugging (solo en desarrollo)
+if os.getenv("DEBUG", "False").lower() == "true":
+    print(f"🔍 CORS Origins configurados: {origins}")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins, # Permite los orígenes definidos
     allow_credentials=True,
-    allow_methods=["*"], # Permite todos los métodos (GET, POST, etc.)
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"], # Métodos explícitos
     allow_headers=["*"], # Permite todas las cabeceras
+    expose_headers=["*"], # Expone todas las cabeceras
+    max_age=3600, # Cache preflight por 1 hora
 )
 
 # Esta es la línea que usa el 'router' del otro archivo
