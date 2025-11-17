@@ -11,9 +11,9 @@ app = FastAPI(title="SILP API")
 cors_origins_str = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:5173")
 origins = [origin.strip() for origin in cors_origins_str.split(",") if origin.strip()]
 
-# Log para debugging (solo en desarrollo)
-if os.getenv("DEBUG", "False").lower() == "true":
-    print(f"🔍 CORS Origins configurados: {origins}")
+# Log para debugging (siempre mostrar en Railway para troubleshooting)
+print(f"🔍 CORS Origins configurados: {origins}")
+print(f"🔍 CORS_ORIGINS variable: {cors_origins_str}")
 
 app.add_middleware(
     CORSMiddleware,
