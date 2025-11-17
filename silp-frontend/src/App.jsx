@@ -11,6 +11,7 @@ import ContactsPage from './ContactsPage';
 import UsersPage from './UsersPage';
 import UploadContactsPage from './UploadContactsPage';
 import DownloadContactsPage from './DownloadContactsPage';
+import NetworkVisualization from './NetworkVisualization';
 import RequestPasswordReset from './RequestPasswordReset';
 import ResetPassword from './ResetPassword';
 import SessionWarningDialog from './SessionWarningDialog';
@@ -178,6 +179,14 @@ function App() {
             element={
               ['superadmin', 'admin'].includes(currentUser?.role) 
                 ? <DownloadContactsPage token={token} /> 
+                : <Navigate to="/contacts" />
+            } 
+          />
+          <Route 
+            path="network" 
+            element={
+              ['superadmin', 'admin', 'lider'].includes(currentUser?.role) 
+                ? <NetworkVisualization /> 
                 : <Navigate to="/contacts" />
             } 
           />

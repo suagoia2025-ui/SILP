@@ -1,6 +1,7 @@
 // src/Layout.jsx
 import { Link as RouterLink, Outlet } from 'react-router-dom';
-import { Box, Drawer, List, ListItem, ListItemButton, ListItemText, Typography, Button, AppBar, Toolbar } from '@mui/material';
+import { Box, Drawer, List, ListItem, ListItemButton, ListItemText, ListItemIcon, Typography, Button, AppBar, Toolbar } from '@mui/material';
+import AccountTreeIcon from '@mui/icons-material/AccountTree';
 
 const drawerWidth = 240;
 
@@ -58,6 +59,18 @@ function Layout({ currentUser, onLogout }) {
               <ListItem disablePadding component={RouterLink} to="/admin/descarga-contactos">
                 <ListItemButton>
                   <ListItemText primary="Descarga Masiva de Contactos" />
+                </ListItemButton>
+              </ListItem>
+            )}
+
+            {/* Este link aparece para superadmin, admin y lider */}
+            {['superadmin', 'admin', 'lider'].includes(currentUser?.role) && (
+              <ListItem disablePadding component={RouterLink} to="/network">
+                <ListItemButton>
+                  <ListItemIcon>
+                    <AccountTreeIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="Red de Contactos" />
                 </ListItemButton>
               </ListItem>
             )}
