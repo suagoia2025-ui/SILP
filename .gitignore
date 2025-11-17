@@ -47,6 +47,13 @@ venv.bak/
 *.sqlite
 *.sqlite3
 
+# SQL Backups and dumps (should not be in repo)
+backup_*.sql
+*_backup.sql
+*_dump*.sql
+datos_locales.sql
+/tmp/silp_db_dump_*.sql
+
 # Logs
 *.log
 logs/
