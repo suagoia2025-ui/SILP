@@ -1,6 +1,8 @@
 # SILP Frontend - Documentación para Desarrolladores
 
-> **Última actualización**: 16 de noviembre de 2025
+> **Última actualización**: 17 de noviembre de 2025
+
+**Nota**: Esta documentación incluye el nuevo componente **NetworkVisualization** para visualización interactiva de la red de contactos.
 
 Frontend del sistema SILP construido con React, Material-UI y Vite.
 
@@ -67,6 +69,8 @@ silp-frontend/
 │   │
 │   ├── RequestPasswordReset.jsx  # Solicitar recuperación de contraseña
 │   ├── ResetPassword.jsx         # Restablecer contraseña
+│   │
+│   ├── NetworkVisualization.jsx  # Visualización de red de contactos
 │   │
 │   ├── ConfirmationDialog.jsx   # Diálogo de confirmación
 │   ├── SessionWarningDialog.jsx # Advertencia de sesión (con contador de tiempo)
@@ -182,6 +186,33 @@ Formulario reutilizable para crear/editar usuarios.
 - Campos básicos: nombre, apellido, email, contraseña, teléfono, dirección, rol
 - `is_active`: Switch para activar/desactivar usuario
 - `mdv`: Campo de texto para referencia alfanumérica personalizada
+
+### NetworkVisualization.jsx
+
+Componente de visualización interactiva de la red de contactos usando ReactFlow y d3-force.
+
+**Características:**
+- **Layout con simulación de fuerzas**: Cada usuario está rodeado por una nube compacta de sus contactos
+- **Búsqueda en tiempo real**: Por nombre, email o teléfono
+- **Filtros dinámicos**: Por tipo (usuario/contacto), rol y estado
+- **Interactividad**:
+  - Click en nodo abre drawer con detalles completos
+  - Zoom automático al nodo seleccionado
+  - Drag & drop de nodos
+  - Zoom y pan del canvas
+- **Visualización**:
+  - Colores diferenciados por rol (superadmin: fucsia, admin: azul oscuro, líder: azul cielo)
+  - Colores por estado (activo: verde, inactivo: rojo)
+  - Tamaños diferenciados (usuarios: 8px, contactos: 6px)
+  - Tooltips informativos
+  - MiniMap opcional
+- **Optimización**: Renderizado eficiente para 10,000+ nodos
+
+**Dependencias:**
+- `reactflow`: Visualización de grafos
+- `d3-force`: Simulación de fuerzas para layout
+
+**Ruta:** `/network` (requiere autenticación, accesible para superadmin, admin y lider)
 
 ## 🔄 Gestión de Estado
 
@@ -331,6 +362,7 @@ Todas las demás rutas requieren autenticación:
 
 - `/contacts` - Gestión de contactos (default)
 - `/users` - Gestión de usuarios (solo superadmin)
+- `/network` - Visualización de red de contactos (superadmin, admin, lider)
 
 ### Redirecciones
 
@@ -624,6 +656,6 @@ Para producción, considera usar variables de entorno para la URL del backend. P
 
 ---
 
-**Última actualización**: 14 de noviembre de 2025
+**Última actualización**: 17 de noviembre de 2025
 
 **¿Preguntas?** Consulta la documentación principal del proyecto o contacta al equipo de desarrollo.

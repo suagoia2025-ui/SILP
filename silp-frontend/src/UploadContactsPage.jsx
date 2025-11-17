@@ -13,6 +13,7 @@ import {
   ListItemText,
   Divider
 } from '@mui/material';
+import { getApiUrl } from './config';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
@@ -53,7 +54,7 @@ function UploadContactsPage({ token }) {
       formData.append('file', file);
 
       const response = await axios.post(
-        'http://127.0.0.1:8000/api/v1/admin/upload-contacts',
+        getApiUrl('/admin/upload-contacts'),
         formData,
         {
           headers: {

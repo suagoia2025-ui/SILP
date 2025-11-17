@@ -7,6 +7,7 @@ import {
 } from '@mui/material';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import { getApiUrl } from './config';
 
 function Login({ onLoginSuccess }) {
   const [email, setEmail] = useState('');
@@ -18,7 +19,7 @@ function Login({ onLoginSuccess }) {
     event.preventDefault();
     setError('');
     try {
-      const response = await axios.post('http://127.0.0.1:8000/api/v1/login', {
+      const response = await axios.post(getApiUrl('/login'), {
         email: email,
         password: password,
       });

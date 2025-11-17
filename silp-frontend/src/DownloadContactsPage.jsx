@@ -9,6 +9,7 @@ import {
   CircularProgress,
   Paper
 } from '@mui/material';
+import { getApiUrl } from './config';
 import DownloadIcon from '@mui/icons-material/Download';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
@@ -25,7 +26,7 @@ function DownloadContactsPage({ token }) {
 
     try {
       const response = await axios.get(
-        'http://127.0.0.1:8000/api/v1/contacts/download-csv',
+        getApiUrl('/contacts/download-csv'),
         {
           headers: {
             'Authorization': `Bearer ${token}`

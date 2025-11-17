@@ -56,13 +56,9 @@ def get_password_hash(password: str) -> str:
     return hashed.decode('utf-8')
 
 # Leemos la configuración desde el entorno
-import os
-
 SECRET_KEY = os.getenv("SECRET_KEY", "default-secret-key-change-in-production")
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
-
-#URL donde el usuario obtiene el token
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/login")
 

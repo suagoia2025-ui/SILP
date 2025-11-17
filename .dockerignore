@@ -1,0 +1,48 @@
+# ============================================================================
+# SILP Root - .dockerignore
+# ============================================================================
+# 
+# Archivos y directorios que NO deben incluirse en builds de Docker
+# desde la raíz del proyecto
+# ============================================================================
+
+# Archivos de entorno
+.env
+.env.local
+.env.*.local
+*.env
+.env.prod
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentación (opcional)
+*.md
+!README.md
+
+# Docker
+docker-compose*.yml
+Dockerfile
+.dockerignore
+
+# Scripts
+scripts/
+*.sh
+
+# Archivos temporales
+*.tmp
+*.temp
+.cache/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+

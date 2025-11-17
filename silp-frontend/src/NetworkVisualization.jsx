@@ -28,7 +28,6 @@ import {
   Stack,
   Button,
   Paper,
-  Tooltip,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import SearchIcon from '@mui/icons-material/Search';
@@ -37,6 +36,7 @@ import CenterFocusStrongIcon from '@mui/icons-material/CenterFocusStrong';
 import MapIcon from '@mui/icons-material/Map';
 import MapOutlinedIcon from '@mui/icons-material/MapOutlined';
 import axios from 'axios';
+import { getApiUrl } from './config';
 
 // Configuración para layout con simulación de fuerzas
 const nodeWidth = 8;
@@ -328,7 +328,7 @@ const NetworkVisualization = () => {
           return;
         }
 
-        const response = await axios.get('http://127.0.0.1:8000/api/v1/network/graph-data', {
+        const response = await axios.get(getApiUrl('/network/graph-data'), {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -588,25 +588,6 @@ const NetworkVisualization = () => {
           Limpiar Filtros
         </Button>
 
-        <Button
-          variant="outlined"
-          size="small"
-          onClick={handleResetView}
-          startIcon={<CenterFocusStrongIcon />}
-        >
-          Centrar Vista
-        </Button>
-
-        {/* Toggle MiniMap */}
-        <Button
-          variant="outlined"
-          size="small"
-          onClick={() => setShowMiniMap(!showMiniMap)}
-          startIcon={showMiniMap ? <MapIcon /> : <MapOutlinedIcon />}
-        >
-          {showMiniMap ? 'Ocultar Mapa' : 'Mostrar Mapa'}
-        </Button>
-
         {/* Contador de nodos */}
         <Box sx={{ ml: 'auto' }}>
           <Typography variant="body2" color="text.secondary">
@@ -630,6 +611,48 @@ const NetworkVisualization = () => {
             showMiniMap={showMiniMap}
           />
         </ReactFlowProvider>
+
+        {/* Controles flotantes en el centro superior del canvas */}
+        <Paper
+          elevation={4}
+          sx={{
+            position: 'absolute',
+            top: 16,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            p: 1,
+            display: 'flex',
+            gap: 1,
+            zIndex: 6,
+            borderRadius: 2,
+          }}
+        >
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleResetView}
+            startIcon={<CenterFocusStrongIcon />}
+            sx={{ 
+              textTransform: 'none',
+              fontWeight: 'bold',
+            }}
+          >
+            Centrar Vista
+          </Button>
+
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => setShowMiniMap(!showMiniMap)}
+            startIcon={showMiniMap ? <MapIcon /> : <MapOutlinedIcon />}
+            sx={{ 
+              textTransform: 'none',
+              fontWeight: 'bold',
+            }}
+          >
+            {showMiniMap ? 'Ocultar Mapa' : 'Mostrar Mapa'}
+          </Button>
+        </Paper>
 
         {/* Leyenda de colores */}
         <Paper

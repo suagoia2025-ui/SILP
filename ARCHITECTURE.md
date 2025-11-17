@@ -1,6 +1,8 @@
 # Arquitectura del Sistema SILP
 
-> **Última actualización**: 16 de noviembre de 2025
+> **Última actualización**: 17 de noviembre de 2025
+
+**Nota**: Esta documentación incluye la nueva funcionalidad de **Visualización de Red de Contactos** implementada con ReactFlow y d3-force.
 
 Este documento describe en detalle la arquitectura, diseño y decisiones técnicas del sistema SILP.
 
@@ -76,6 +78,7 @@ App.jsx                    # Router principal y gestión de auth
 ├── Layout.jsx            # Layout con navegación
 ├── ContactsPage.jsx      # Gestión de contactos (muestra inactivos en rojo)
 ├── UsersPage.jsx         # Gestión de usuarios (muestra inactivos en rojo)
+├── NetworkVisualization.jsx  # Visualización de red interactiva
 ├── ContactForm.jsx       # Formulario de contactos (incluye is_active y mdv)
 ├── AddUserForm.jsx       # Formulario de usuarios (incluye is_active y mdv)
 └── [Componentes auxiliares]
@@ -104,6 +107,7 @@ app/
 │   ├── auth.py         # Autenticación
 │   ├── users.py        # CRUD usuarios
 │   ├── contacts.py     # CRUD contactos
+│   ├── network.py      # Visualización de red (grafo de usuarios/contactos)
 │   └── ...
 ├── models.py           # Modelos de base de datos (SQLAlchemy)
 ├── schemas.py          # Esquemas de validación (Pydantic)
@@ -486,6 +490,198 @@ Configurado para permitir:
 - Script de migración: `add_is_active_mdv_columns.sql` (para agregar campos `is_active` y `mdv`)
 - Migraciones manuales (considerar Alembic para futuro)
 
+## 🌐 Visualización de Red de Contactos
+
+### Arquitectura de la Visualización
+
+La funcionalidad de visualización de red permite visualizar interactivamente la relación entre usuarios y sus contactos mediante un grafo dirigido.
+
+**Stack Tecnológico:**
+- **Backend**: FastAPI endpoint `/api/v1/network/graph-data`
+- **Frontend**: ReactFlow + d3-force para layout
+- **Layout**: Simulación de fuerzas con física de repulsión y atracción
+
+### Flujo de Datos
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Frontend (React)                        │
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │  NetworkVisualization.jsx                            │  │
+│  │  - Fetch datos del grafo                              │  │
+│  │  - Aplicar layout con d3-force                       │  │
+│  │  - Renderizar con ReactFlow                           │  │
+│  └───────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
+                            │ HTTP GET
+                            │ /api/v1/network/graph-data
+                            ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    Backend (FastAPI)                      │
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │  routers/network.py                                   │  │
+│  │  - Validar autenticación                               │  │
+│  │  - Determinar permisos según rol                      │  │
+│  │  - Query optimizado con joinedload                    │  │
+│  │  - Formatear nodos y edges                            │  │
+│  └───────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
+                            │ SQLAlchemy ORM
+                            ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    PostgreSQL                              │
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │  users + contacts + municipalities + occupations      │  │
+│  └───────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Backend: Endpoint de Red
+
+**Archivo**: `silp_backend/app/routers/network.py`
+
+**Funcionalidades:**
+- Autenticación JWT requerida
+- Permisos basados en rol:
+  - **Superadmin**: Acceso a todos los usuarios y contactos
+  - **Admin/Líder**: Solo su propio usuario y contactos
+- Optimización con `joinedload` para evitar queries N+1
+- Formato de respuesta estructurado:
+  ```json
+  {
+    "nodes": [
+      {
+        "id": "user-{uuid}",
+        "type": "user",
+        "data": { "label", "role", "is_active", ... },
+        "position": { "x": 0, "y": 0 }
+      },
+      {
+        "id": "contact-{uuid}",
+        "type": "contact",
+        "data": { "label", "owner_name", ... },
+        "position": { "x": 0, "y": 0 }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge-{user_id}-{contact_id}",
+        "source": "user-{uuid}",
+        "target": "contact-{uuid}",
+        "type": "default"
+      }
+    ]
+  }
+  ```
+
+### Frontend: Componente de Visualización
+
+**Archivo**: `silp-frontend/src/NetworkVisualization.jsx`
+
+**Tecnologías:**
+- **ReactFlow**: Biblioteca para visualización de grafos
+- **d3-force**: Simulación de fuerzas para layout automático
+- **Material-UI**: Componentes de UI (búsqueda, filtros, drawer)
+
+**Características Implementadas:**
+
+1. **Layout con Simulación de Fuerzas (d3-force)**
+   - Fuerza de atracción (`forceLink`): Mantiene contactos cerca de su usuario
+   - Fuerza de repulsión (`forceManyBody`): Evita overlap entre nubes
+   - Fuerza de colisión (`forceCollide`): Previene traslapes físicos
+   - Fuerza radial personalizada: Mantiene contactos orbitando su usuario
+   - Resultado: Nubes compactas de contactos alrededor de cada usuario
+
+2. **Sistema de Búsqueda y Filtros**
+   - Búsqueda en tiempo real por nombre, email o teléfono
+   - Filtros por tipo (usuario/contacto)
+   - Filtros por rol (superadmin/admin/líder)
+   - Filtros por estado (activo/inactivo)
+   - Botón "Limpiar Filtros"
+
+3. **Interactividad**
+   - Click en nodo abre drawer con detalles completos
+   - Zoom automático al nodo seleccionado
+   - Botón "Centrar Vista" para resetear zoom
+   - Drag & drop de nodos
+   - Zoom con rueda del mouse
+   - Pan arrastrando el canvas
+
+4. **Visualización**
+   - Colores diferenciados:
+     - Superadmin: Fucsia (#E91E63)
+     - Admin: Azul oscuro (#1A237E)
+     - Líder: Azul cielo (#03A9F4)
+     - Activo: Verde (#4CAF50)
+     - Inactivo: Rojo (#F44336)
+   - Tamaños diferenciados: Usuarios (8px), Contactos (6px)
+   - Tooltips en hover con nombre completo
+   - MiniMap opcional para navegación
+
+5. **Optimizaciones de Rendimiento**
+   - Memoización con `React.memo` y `useMemo`
+   - Layout calculado una vez al cargar datos
+   - Filtrado eficiente de nodos y edges
+   - Renderizado optimizado para 10,000+ nodos
+
+### Parámetros de la Simulación de Fuerzas
+
+```javascript
+// Fuerza de atracción (forceLink)
+- Usuario → Contacto: 50px (nube compacta)
+- Contacto → Contacto: 30px (muy compactos)
+
+// Fuerza de repulsión (forceManyBody)
+- Usuarios: -1200 (repulsión fuerte)
+- Contactos: -100 (repulsión suave)
+
+// Fuerza de colisión (forceCollide)
+- Usuarios: radio 100px (espacio para nube)
+- Contactos: radio 12px (compactos)
+
+// Fuerza radial personalizada
+- Radio objetivo: 50px
+- Strength: 0.15 * alpha
+```
+
+### Permisos y Acceso
+
+**Rutas:**
+- `/network` - Visualización de red (requiere autenticación)
+
+**Roles con acceso:**
+- `superadmin`: Ve toda la red del sistema
+- `admin`: Ve solo su propia red
+- `lider`: Ve solo su propia red
+
+**Implementación en Frontend:**
+```jsx
+<Route 
+  path="network" 
+  element={
+    ['superadmin', 'admin', 'lider'].includes(currentUser?.role) 
+      ? <NetworkVisualization /> 
+      : <Navigate to="/contacts" />
+  } 
+/>
+```
+
+### Dependencias Adicionales
+
+**Frontend:**
+```json
+{
+  "reactflow": "^11.x",
+  "d3-force": "^3.x"
+}
+```
+
+**Instalación:**
+```bash
+cd silp-frontend
+npm install reactflow d3-force
+```
+
 ## 📈 Consideraciones Futuras
 
 1. **Migraciones de BD**: Implementar Alembic
@@ -499,6 +695,6 @@ Configurado para permitir:
 
 ---
 
-**Última actualización**: 16 de noviembre de 2025
+**Última actualización**: 17 de noviembre de 2025
 
 

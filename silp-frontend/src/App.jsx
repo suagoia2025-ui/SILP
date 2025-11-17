@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 import { Box, CircularProgress } from '@mui/material';
+import { getApiUrl } from './config';
 
 // Importa todos tus componentes de página
 import Login from './Login';
@@ -40,7 +41,7 @@ function App() {
     setToken(newToken);
     try {
       // Inmediatamente después de obtener el token, pedimos los datos del usuario
-      const response = await axios.get('http://127.0.0.1:8000/api/v1/users/me', {
+      const response = await axios.get(getApiUrl('/users/me'), {
         headers: { Authorization: `Bearer ${newToken}` }
       });
       setCurrentUser(response.data);
@@ -60,7 +61,7 @@ function App() {
       return;
     }
 
-    axios.get('http://127.0.0.1:8000/api/v1/users/me', { headers: { Authorization: `Bearer ${activeToken}` } })
+    axios.get(getApiUrl('/users/me'), { headers: { Authorization: `Bearer ${activeToken}` } })
       .then(response => {
         setCurrentUser(response.data);
         setToken(activeToken);
@@ -123,7 +124,7 @@ function App() {
 
       // Llamar al endpoint de renovación de token
       const response = await axios.post(
-        'http://127.0.0.1:8000/api/v1/refresh-token',
+        getApiUrl('/refresh-token'),
         {},
         {
           headers: { Authorization: `Bearer ${activeToken}` }

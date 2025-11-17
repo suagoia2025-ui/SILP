@@ -38,8 +38,6 @@ def read_contacts(
     current_user: models.User = Depends(security.get_current_user),
     search: str = ""
 ):
-    print(f">>> RUTA /contacts: Recibido el parámetro de búsqueda = '{search}'") # prueba
-    
     if current_user.role == "superadmin":
         contacts = crud.get_all_contacts(db=db, search=search)
     else:

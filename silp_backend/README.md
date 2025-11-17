@@ -1,6 +1,8 @@
 # SILP Backend - Documentación para Desarrolladores
 
-> **Última actualización**: 16 de noviembre de 2025
+> **Última actualización**: 17 de noviembre de 2025
+
+**Nota**: Esta documentación incluye el nuevo endpoint `/api/v1/network/graph-data` para la visualización de red de contactos.
 
 Backend del sistema SILP construido con FastAPI, SQLAlchemy y PostgreSQL.
 
@@ -152,7 +154,8 @@ silp_backend/
 │       ├── contacts.py         # CRUD contactos
 │       ├── municipalities.py   # Listar municipios
 │       ├── occupations.py     # Listar ocupaciones
-│       └── password_recovery.py # Recuperación de contraseña
+│       ├── password_recovery.py # Recuperación de contraseña
+│       └── network.py          # Visualización de red (grafo de usuarios/contactos)
 ├── db_provida_uf.sql           # Script de inicialización de BD
 ├── add_is_active_mdv_columns.sql  # Script de migración para campos is_active y mdv
 ├── .env                        # Variables de entorno (no commiteado)
@@ -394,6 +397,76 @@ Listar todos los municipios.
 
 #### `GET /api/v1/occupations/`
 Listar todas las ocupaciones.
+
+### Visualización de Red
+
+#### `GET /api/v1/network/graph-data`
+Obtener datos del grafo de usuarios y contactos para visualización.
+
+**Headers:**
+```
+Authorization: Bearer <token>
+```
+
+**Permisos:**
+- **Superadmin**: Ve todos los usuarios y contactos del sistema
+- **Admin/Líder**: Ve solo a sí mismo y sus contactos
+
+**Response:**
+```json
+{
+  "nodes": [
+    {
+      "id": "user-{uuid}",
+      "type": "user",
+      "data": {
+        "label": "Nombre Completo",
+        "first_name": "Juan",
+        "last_name": "Pérez",
+        "email": "juan@ejemplo.com",
+        "phone": "1234567890",
+        "role": "lider",
+        "is_active": true,
+        "mdv": "REF001",
+        "municipality": "Cúcuta",
+        "occupation": "Ingeniero",
+        "contact_count": 5
+      },
+      "position": { "x": 0, "y": 0 }
+    },
+    {
+      "id": "contact-{uuid}",
+      "type": "contact",
+      "data": {
+        "label": "Nombre Completo",
+        "first_name": "María",
+        "last_name": "González",
+        "email": "maria@ejemplo.com",
+        "phone": "0987654321",
+        "is_active": true,
+        "mdv": "REF002",
+        "municipality": "Bucaramanga",
+        "occupation": "Médico",
+        "owner_name": "Juan Pérez"
+      },
+      "position": { "x": 0, "y": 0 }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-{user_id}-{contact_id}",
+      "source": "user-{uuid}",
+      "target": "contact-{uuid}",
+      "type": "default"
+    }
+  ]
+}
+```
+
+**Notas:**
+- Las posiciones (`x`, `y`) se calculan en el frontend usando d3-force
+- El endpoint usa `joinedload` para optimizar las queries y evitar N+1
+- Los campos `municipality` y `occupation` pueden ser `null` si no están asignados
 
 ### Recuperación de Contraseña
 
@@ -672,7 +745,7 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
 
 ---
 
-**Última actualización**: 16 de noviembre de 2025
+**Última actualización**: 17 de noviembre de 2025
 
 **¿Preguntas?** Consulta la documentación principal del proyecto o contacta al equipo de desarrollo.
 

@@ -1,15 +1,15 @@
 from fastapi import FastAPI
-from .routers import auth, users, contacts, password_recovery, municipalities, occupations, admin, network
-#Esta importacion es necesaria para decirle a la API que permita las peticiones del Frontend
 from fastapi.middleware.cors import CORSMiddleware
+import os
+from .routers import auth, users, contacts, password_recovery, municipalities, occupations, admin, network
 
 app = FastAPI(title="SILP API")
 
 # Define de qué orígenes (direcciones) se permitirán peticiones
-origins = [
-    "http://localhost:5173", # La dirección de tu frontend de React
-    "http://localhost:3000", # Otra dirección común para React
-]
+# Lee desde variable de entorno CORS_ORIGINS (separados por comas)
+# Por defecto usa localhost:3000 y localhost:5173
+cors_origins_str = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:5173")
+origins = [origin.strip() for origin in cors_origins_str.split(",") if origin.strip()]
 
 app.add_middleware(
     CORSMiddleware,
