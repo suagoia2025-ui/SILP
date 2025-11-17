@@ -1,9 +1,12 @@
 # app/email_utils.py
 import os
+import logging
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
 from dotenv import load_dotenv
 
 load_dotenv()
+
+logger = logging.getLogger(__name__)
 
 # Creamos la configuración para la conexión con Mailtrap
 conf = ConnectionConfig(
@@ -30,4 +33,4 @@ async def send_email(subject: str, recipients: list, body: str):
     
     fm = FastMail(conf)
     await fm.send_message(message)
-    print(f"Correo de prueba enviado a: {recipients}")
+    logger.info(f"Correo enviado a: {recipients}")

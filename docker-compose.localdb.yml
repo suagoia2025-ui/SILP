@@ -1,0 +1,109 @@
+# ============================================================================
+# SILP Project - Docker Compose (Usando Base de Datos Local)
+# ============================================================================
+#
+# Este archivo configura Docker para usar la base de datos PostgreSQL local
+# en lugar de crear un contenedor de base de datos.
+#
+# Uso:
+#   docker compose -f docker-compose.localdb.yml up -d
+#
+# Requisitos:
+#   - PostgreSQL corriendo localmente en el puerto 5432
+#   - Base de datos db_provida_uf debe existir
+#   - Usuario postgres debe tener acceso
+#
+# ============================================================================
+
+version: '3.8'
+
+services:
+  # ==========================================================================
+  # Backend FastAPI (conectado a BD local)
+  # ==========================================================================
+  backend:
+    build:
+      context: ./silp_backend
+      dockerfile: Dockerfile
+    container_name: silp_backend
+    restart: unless-stopped
+    environment:
+      # Base de datos - Conecta a PostgreSQL local usando host.docker.internal
+      # host.docker.internal es una forma especial de acceder al host desde Docker
+      DATABASE_URL: postgresql://postgres:${LOCAL_POSTGRES_PASSWORD}@host.docker.internal:5432/db_provida_uf
+      
+      # Seguridad JWT
+      SECRET_KEY: ${SECRET_KEY:-change-me-in-production-min-32-characters}
+      ALGORITHM: ${ALGORITHM:-HS256}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-30}
+      PASSWORD_RESET_TOKEN_EXPIRE_MINUTES: ${PASSWORD_RESET_TOKEN_EXPIRE_MINUTES:-60}
+      
+      # Email (SMTP)
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_FROM: ${MAIL_FROM:-noreply@silp.com}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_SERVER: ${MAIL_SERVER:-smtp.mailtrap.io}
+      MAIL_FROM_NAME: ${MAIL_FROM_NAME:-SILP Sistema}
+      MAIL_TLS: ${MAIL_TLS:-True}
+      MAIL_SSL: ${MAIL_SSL:-False}
+      
+      # CORS
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:5173}
+      
+      # Frontend URL
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+    volumes:
+      # Montar el código para hot-reload en desarrollo
+      - ./silp_backend/app:/app/app
+      - ./silp_backend/requirements.txt:/app/requirements.txt
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    # No depende de db porque usa la BD local
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/').read()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - silp_network
+    # En macOS y Windows, host.docker.internal funciona automáticamente
+    # En Linux, puede necesitar extra_hosts
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # ==========================================================================
+  # Frontend React
+  # ==========================================================================
+  frontend:
+    build:
+      context: ./silp-frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
+    container_name: silp_frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-3000}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    networks:
+      - silp_network
+
+# ==========================================================================
+# Redes
+# ==========================================================================
+networks:
+  silp_network:
+    driver: bridge
+
+# Nota: No hay volumen de base de datos porque usamos la BD local
+

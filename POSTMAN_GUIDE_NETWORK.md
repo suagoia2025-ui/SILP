@@ -178,12 +178,5 @@ Solo verás tu propio usuario y tus contactos.
 - [ ] Los nodos tienen la estructura correcta
 - [ ] Las conexiones (edges) están correctamente formateadas
 
----
 
-## 🚀 Próximos Pasos
-
-Una vez que el endpoint funcione correctamente en Postman, puedes:
-1. Integrar el endpoint en el frontend React
-2. Crear la visualización del grafo con ReactFlow o D3.js
-3. Implementar el layout y posicionamiento de nodos
 

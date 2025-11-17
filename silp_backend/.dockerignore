@@ -1,0 +1,95 @@
+# ============================================================================
+# SILP Backend - .dockerignore
+# ============================================================================
+# 
+# Archivos y directorios que NO deben incluirse en la imagen Docker
+# Esto reduce el tamaño de la imagen y acelera el build
+# ============================================================================
+
+# Entorno virtual de Python
+venv/
+env/
+ENV/
+.venv/
+venv.bak/
+
+# Archivos de Python compilados
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Distribuciones y builds
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Archivos de entorno (se pasan como variables)
+.env
+.env.local
+.env.*.local
+*.env
+
+# IDEs y editores
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# Sistema operativo
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# Logs
+*.log
+logs/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+
+# Documentación generada
+docs/_build/
+site/
+
+# Archivos temporales
+*.tmp
+*.temp
+.cache/
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose*.yml
+
+# Scripts de desarrollo
+scripts/
+*.sh
+
+# Archivos SQL (se montan como volumen si es necesario)
+*.sql
+
+# README y documentación (opcional, pueden incluirse)
+# README.md
+# *.md
+

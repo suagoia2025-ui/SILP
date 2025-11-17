@@ -1,6 +1,8 @@
 # SILP - Sistema de Integración de Líderes Privada
 
-> **Última actualización**: 16 de noviembre de 2025
+> **Última actualización**: 17 de noviembre de 2025
+
+**Nota**: Esta documentación incluye la nueva funcionalidad de **Visualización de Red de Contactos** implementada con ReactFlow y d3-force.
 
 SILP es una aplicación web completa para la gestión de contactos y usuarios con un sistema robusto de roles y permisos. El sistema permite a líderes, administradores y superadministradores gestionar contactos de manera eficiente y segura.
 
@@ -52,6 +54,19 @@ SILP es una aplicación web completa para la gestión de contactos y usuarios co
 - ✅ Catálogo de ocupaciones
 - ✅ Relaciones entre entidades
 
+### Visualización de Red de Contactos
+- ✅ Visualización interactiva de usuarios y sus contactos
+- ✅ Layout con simulación de fuerzas (d3-force)
+- ✅ Nubes orbitales: cada usuario rodeado por sus contactos
+- ✅ Sistema de búsqueda en tiempo real
+- ✅ Filtros dinámicos (tipo, rol, estado)
+- ✅ Zoom automático y navegación interactiva
+- ✅ Panel de detalles al hacer click en nodos
+- ✅ Optimizado para grandes volúmenes de datos (10,000+ nodos)
+- ✅ Tooltips informativos en hover
+- ✅ MiniMap opcional para navegación
+- ✅ Colores diferenciados por rol y estado
+
 ## 🛠 Tecnologías
 
 ### Backend
@@ -70,6 +85,8 @@ SILP es una aplicación web completa para la gestión de contactos y usuarios co
 - **Axios**: Cliente HTTP para peticiones API
 - **Vite**: Herramienta de construcción rápida
 - **JWT-Decode**: Decodificación de tokens JWT
+- **ReactFlow**: Visualización de grafos y redes
+- **d3-force**: Simulación de fuerzas para layout de grafos
 
 ## 🏗 Arquitectura
 
@@ -312,18 +329,188 @@ SILP/
 │   │   ├── Layout.jsx        # Layout principal
 │   │   ├── ContactsPage.jsx  # Gestión de contactos
 │   │   ├── UsersPage.jsx     # Gestión de usuarios
+│   │   ├── NetworkVisualization.jsx  # Visualización de red
 │   │   └── ...               # Otros componentes
 │   └── README.md             # Documentación del frontend
 │
 ├── ARCHITECTURE.md           # Documentación de arquitectura
+├── DOCKER.md                 # Documentación de Docker
+├── docker-compose.yml        # Docker Compose (desarrollo)
+├── docker-compose.prod.yml   # Docker Compose (producción)
+├── .env.example              # Template de variables de entorno
 └── README.md                 # Este archivo
 ```
+
+## 🐳 Despliegue con Docker
+
+Docker permite ejecutar todo el proyecto con un solo comando, eliminando problemas de configuración de entorno.
+
+### Requisitos Previos
+
+- **Docker 20.x+** ([Instalar Docker](https://docs.docker.com/get-docker/))
+- **Docker Compose 2.x+** (incluido con Docker Desktop)
+
+### Configuración Inicial
+
+```bash
+# 1. Copiar template de variables de entorno
+cp .env.example .env
+
+# 2. Editar .env con tus valores reales
+# Usa tu editor favorito: nano, vim, code, etc.
+nano .env
+```
+
+**Variables críticas a configurar:**
+- `POSTGRES_PASSWORD`: Contraseña segura para PostgreSQL
+- `SECRET_KEY`: Clave secreta para JWT (genera una: `python -c "import secrets; print(secrets.token_urlsafe(32))"`)
+- `VITE_API_URL`: URL del backend (http://localhost:8000 en desarrollo)
+
+### Comandos de Desarrollo
+
+```bash
+# Levantar todos los servicios
+docker-compose up -d
+
+# Ver logs en tiempo real
+docker-compose logs -f
+
+# Ver logs de un servicio específico
+docker-compose logs -f backend
+docker-compose logs -f frontend
+docker-compose logs -f db
+
+# Detener servicios
+docker-compose down
+
+# Detener y eliminar volúmenes (¡cuidado! borra la BD)
+docker-compose down -v
+
+# Reconstruir después de cambios en código
+docker-compose up -d --build
+```
+
+### Acceso a Servicios
+
+Una vez levantados los servicios:
+
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:8000
+- **API Docs (Swagger)**: http://localhost:8000/docs
+- **API Docs (ReDoc)**: http://localhost:8000/redoc
+- **PostgreSQL**: localhost:5432
+
+### Comandos Útiles
+
+```bash
+# Ejecutar comandos dentro del contenedor del backend
+docker-compose exec backend bash
+
+# Acceder a PostgreSQL
+docker-compose exec db psql -U silp_user -d db_provida_uf
+
+# Ver estado de los contenedores
+docker-compose ps
+
+# Reiniciar un servicio específico
+docker-compose restart backend
+
+# Ver uso de recursos
+docker stats
+
+# Limpiar imágenes y contenedores no utilizados
+docker system prune -a
+```
+
+### Inicialización de Base de Datos
+
+La base de datos se inicializa automáticamente al crear el contenedor si los archivos SQL están montados. Si necesitas ejecutar scripts manualmente:
+
+```bash
+# Ejecutar script SQL
+docker-compose exec db psql -U silp_user -d db_provida_uf -f /docker-entrypoint-initdb.d/01-init.sql
+```
+
+### Troubleshooting
+
+**Error de conexión a BD:**
+```bash
+# Verificar que el servicio db esté healthy
+docker-compose ps
+docker-compose logs db
+
+# Verificar variables de entorno
+docker-compose exec backend env | grep DATABASE_URL
+```
+
+**Backend no inicia:**
+```bash
+# Revisar logs detallados
+docker-compose logs backend
+
+# Verificar que la BD esté lista
+docker-compose exec db pg_isready -U silp_user
+```
+
+**Frontend no carga:**
+```bash
+# Verificar que VITE_API_URL esté configurado correctamente
+docker-compose exec frontend env | grep VITE
+
+# Revisar logs
+docker-compose logs frontend
+```
+
+**Problemas de permisos:**
+```bash
+# Verificar ownership de volúmenes
+docker volume ls
+docker volume inspect silp_postgres_data
+```
+
+**Reconstruir desde cero:**
+```bash
+# Detener y eliminar todo
+docker-compose down -v
+
+# Eliminar imágenes
+docker rmi silp_backend silp_frontend
+
+# Reconstruir
+docker-compose up -d --build
+```
+
+### Producción
+
+Para despliegue en producción, usa `docker-compose.prod.yml`:
+
+```bash
+# Crear archivo de entorno para producción
+cp .env.example .env.prod
+
+# Editar .env.prod con valores de producción
+nano .env.prod
+
+# Levantar servicios de producción
+docker-compose -f docker-compose.prod.yml --env-file .env.prod up -d
+```
+
+**Importante para producción:**
+- ✅ Cambiar todas las contraseñas y secretos
+- ✅ Usar HTTPS (configurar reverse proxy)
+- ✅ Ajustar `CORS_ORIGINS` a tu dominio real
+- ✅ Configurar backup de base de datos
+- ✅ Monitorear logs y recursos
+- ✅ No exponer puerto de PostgreSQL públicamente
+
+Para más detalles, consulta [DOCKER.md](./DOCKER.md).
 
 ## 📚 Documentación Adicional
 
 - [Documentación del Backend](./silp_backend/README.md)
 - [Documentación del Frontend](./silp-frontend/README.md)
 - [Documentación de Arquitectura](./ARCHITECTURE.md)
+- [Documentación de Docker](./DOCKER.md)
 
 ## 👥 Roles y Permisos
 
@@ -339,6 +526,7 @@ SILP/
 
 ### Líder
 - ✅ Gestionar solo sus propios contactos
+- ✅ Visualizar su propia red de contactos
 - ❌ No puede ver contactos de otros usuarios
 - ❌ No puede gestionar usuarios
 
@@ -381,7 +569,7 @@ Para preguntas o soporte, contacta al equipo de desarrollo.
 
 ---
 
-**Última actualización**: 16 de noviembre de 2025
+**Última actualización**: 17 de noviembre de 2025
 
 **Desarrollado con ❤️ para la gestión eficiente de contactos y líderes**
 

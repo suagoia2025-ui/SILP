@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Container, Typography, List, ListItem, ListItemText, CircularProgress, Box, Button, Snackbar, Alert, IconButton, TextField, Grid, ListItemButton } from '@mui/material';
+import { getApiUrl } from './config';
 import AddUserForm from './AddUserForm';
 import ConfirmationDialog from './ConfirmationDialog';
 import UserDetail from './UserDetail'; // <-- Importamos el nuevo componente
@@ -21,10 +22,10 @@ function UsersPage({ token }) {
 
   const fetchData = async () => {
     try {
-      const [usersRes, municipalitiesRes] = await Promise.all([
-        axios.get('http://127.0.0.1:8000/api/v1/users/', { headers: { Authorization: `Bearer ${token}` }, params: { search: searchTerm } }),
-        axios.get('http://127.0.0.1:8000/api/v1/municipalities/'),
-        axios.get('http://127.0.0.1:8000/api/v1/occupations/')
+      const [usersRes, municipalitiesRes, occupationsRes] = await Promise.all([
+        axios.get(getApiUrl('/users/'), { headers: { Authorization: `Bearer ${token}` }, params: { search: searchTerm } }),
+        axios.get(getApiUrl('/municipalities/')),
+        axios.get(getApiUrl('/occupations/'))
       ]);
       setUsers(usersRes.data);
       setMunicipalities(municipalitiesRes.data);
@@ -42,12 +43,12 @@ function UsersPage({ token }) {
       try {
         // Hacemos las tres peticiones en paralelo para cargar todo
         const [usersRes, municipalitiesRes, occupationsRes] = await Promise.all([
-          axios.get('http://127.0.0.1:8000/api/v1/users/', { 
+          axios.get(getApiUrl('/users/'), { 
             headers: { Authorization: `Bearer ${token}` },
             params: { search: searchTerm }
           }),
-          axios.get('http://127.0.0.1:8000/api/v1/municipalities/'),
-          axios.get('http://127.0.0.1:8000/api/v1/occupations/') // <-- La petición que faltaba
+          axios.get(getApiUrl('/municipalities/')),
+          axios.get(getApiUrl('/occupations/'))
         ]);
 
         setUsers(usersRes.data);
@@ -67,7 +68,7 @@ function UsersPage({ token }) {
 
   const handleSave = async (userData) => {
     const isEditMode = !!editingUser;
-    const url = isEditMode ? `http://127.0.0.1:8000/api/v1/users/${editingUser.id}` : 'http://127.0.0.1:8000/api/v1/users/';
+    const url = isEditMode ? getApiUrl(`/users/${editingUser.id}`) : getApiUrl('/users/');
     const method = isEditMode ? 'put' : 'post';
     try {
       const response = await axios[method](url, userData, { headers: { Authorization: `Bearer ${token}` } });
@@ -97,7 +98,7 @@ function UsersPage({ token }) {
   const handleDelete = async () => {
     if (!userToDelete) return;
     try {
-      await axios.delete(`http://127.0.0.1:8000/api/v1/users/${userToDelete.id}`, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.delete(getApiUrl(`/users/${userToDelete.id}`), { headers: { Authorization: `Bearer ${token}` } });
       setUsers(users.filter(u => u.id !== userToDelete.id));
       setSelectedUser(null);
       setSnackbar({ open: true, message: 'Usuario eliminado.', severity: 'success' });

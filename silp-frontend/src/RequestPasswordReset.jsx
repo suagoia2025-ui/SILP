@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import axios from 'axios';
 import { Box, Button, TextField, Typography, Container, Alert } from '@mui/material';
+import { getApiUrl } from './config';
 
 function RequestPasswordReset() {
   const [email, setEmail] = useState('');
@@ -13,7 +14,7 @@ function RequestPasswordReset() {
     setMessage('');
     setError('');
     try {
-      const response = await axios.post('http://127.0.0.1:8000/api/v1/password-recovery', { email });
+      const response = await axios.post(getApiUrl('/password-recovery'), { email });
       setMessage(response.data.message);
     } catch (err) {
       setError('Ocurrió un error al intentar enviar el correo.');

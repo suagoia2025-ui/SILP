@@ -3,6 +3,7 @@ import axios from 'axios';
 import ContactForm from './ContactForm';
 import ConfirmationDialog from './ConfirmationDialog';
 import ContactDetail from './ContactDetail';
+import { getApiUrl } from './config';
 import {
   Container, Grid, Box, Typography, Button, List, ListItem, ListItemButton,
   ListItemText, IconButton, CircularProgress, Alert, Snackbar, TextField
@@ -21,17 +22,17 @@ function ContactsPage({ token }) {
   const [isCreating, setIsCreating] = useState(false);
   const [editingContact, setEditingContact] = useState(null);
   const [contactToDelete, setContactToDelete] = useState(null);
-  const [snackbar, setSnackbar] = useState({ open, message: '', severity: 'success' });
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
   const fetchData = async () => {
     try {
       const [contactsRes, municipalitiesRes, occupationsRes] = await Promise.all([
-        axios.get('http://127.0.0.1:8000/api/v1/contacts/', {
+        axios.get(getApiUrl('/contacts/'), {
           headers: { Authorization: `Bearer ${token}` },
           params: { search: searchTerm }
         }),
-        axios.get('http://127.0.0.1:8000/api/v1/municipalities/'),
-        axios.get('http://127.0.0.1:8000/api/v1/occupations/')
+        axios.get(getApiUrl('/municipalities/')),
+        axios.get(getApiUrl('/occupations/'))
       ]);
       setContacts(contactsRes.data);
       setMunicipalities(municipalitiesRes.data);
@@ -53,7 +54,7 @@ function ContactsPage({ token }) {
 
   const handleSave = async (contactData, contactId = null) => {
     const isEditMode = !!contactId;
-    const url = isEditMode ? `http://127.0.0.1:8000/api/v1/contacts/${contactId}` : 'http://127.0.0.1:8000/api/v1/contacts/';
+    const url = isEditMode ? getApiUrl(`/contacts/${contactId}`) : getApiUrl('/contacts/');
     const method = isEditMode ? 'put' : 'post';
     
     try {
@@ -77,7 +78,7 @@ function ContactsPage({ token }) {
   const handleDelete = async () => {
     if (!contactToDelete) return;
     try {
-      await axios.delete(`http://127.0.0.1:8000/api/v1/contacts/${contactToDelete.id}`, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.delete(getApiUrl(`/contacts/${contactToDelete.id}`), { headers: { Authorization: `Bearer ${token}` } });
       setContacts(prev => prev.filter(c => c.id !== contactToDelete.id));
       setSelectedContact(null);
       setSnackbar({ open: true, message: 'Contacto eliminado.', severity: 'success' });
