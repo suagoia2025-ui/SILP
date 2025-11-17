@@ -1,5 +1,7 @@
 # PROMPT TÉCNICO: Sistema SILP - Visualización de Red de Propietarios
 
+> **Última actualización**: 16 de noviembre de 2025
+
 ## CONTEXTO DEL PROYECTO ACTUAL
 
 ### Descripción General

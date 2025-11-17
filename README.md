@@ -1,5 +1,7 @@
 # SILP - Sistema de Integración de Líderes Privada
 
+> **Última actualización**: 16 de noviembre de 2025
+
 SILP es una aplicación web completa para la gestión de contactos y usuarios con un sistema robusto de roles y permisos. El sistema permite a líderes, administradores y superadministradores gestionar contactos de manera eficiente y segura.
 
 ## 📋 Tabla de Contenidos
@@ -107,7 +109,16 @@ Antes de comenzar, asegúrate de tener instalado:
 - **npm** o **yarn**
 - **Git**
 
-## 🚀 Instalación
+## 🚀 Instalación y Configuración
+
+### Prerrequisitos
+
+Antes de comenzar, asegúrate de tener instalado:
+
+- **Python 3.8+** (recomendado 3.13)
+- **Node.js 18+** y npm
+- **PostgreSQL 12+**
+- **Git**
 
 ### 1. Clonar el Repositorio
 
@@ -116,7 +127,7 @@ git clone <url-del-repositorio>
 cd SILP
 ```
 
-### 2. Configurar el Backend
+### 2. Configurar Backend
 
 ```bash
 # Desde la raíz del proyecto SILP:
@@ -126,67 +137,56 @@ cd silp_backend
 python -m venv venv
 
 # Activar entorno virtual
+# En Mac/Linux:
+source venv/bin/activate
 # En Windows:
 venv\Scripts\activate
-# En macOS/Linux:
-source venv/bin/activate
 
 # Instalar dependencias
-pip install fastapi uvicorn sqlalchemy psycopg2-binary python-dotenv python-jose[cryptography] passlib[bcrypt] pydantic[email] fastapi-mail
+pip install -r requirements.txt
+
+# Configurar variables de entorno
+cp .env.example .env
+# Editar .env con tus credenciales reales (usando tu editor favorito)
 ```
 
-### 3. Configurar la Base de Datos
+**Nota**: El archivo `requirements.txt` contiene todas las dependencias necesarias con versiones específicas para garantizar compatibilidad.
 
-La base de datos `db_provida_uf` ya debe existir en PostgreSQL. Si necesitas ejecutar el script de inicialización:
+### 3. Configurar Base de Datos
 
 ```bash
-# Ejecutar script SQL en la base de datos existente
-# Desde la raíz del proyecto SILP:
-psql -d db_provida_uf -f silp_backend/db_provida_uf.sql
-
-# O desde dentro de silp_backend:
-cd silp_backend
-psql -d db_provida_uf -f db_provida_uf.sql
-```
-
-**Nota**: Si la base de datos no existe, créala primero con:
-```bash
+# Crear la base de datos (si no existe)
 createdb db_provida_uf
+
+# Inicializar la base de datos con el esquema
+# Desde silp_backend:
+cd silp_backend
+psql -U postgres -d db_provida_uf -f db_provida_uf.sql
+
+# O con contraseña:
+PGPASSWORD='tu_contraseña' psql -U postgres -d db_provida_uf -f db_provida_uf.sql
 ```
 
 **Migración de campos nuevos (`is_active` y `mdv`):**
 
-Si ya tienes una base de datos existente y necesitas agregar los campos `is_active` y `mdv` a las tablas `users` y `contacts`, ejecuta:
+Si ya tienes una base de datos existente y necesitas agregar los campos `is_active` y `mdv`:
 
 ```bash
-# Desde silp_backend:
 cd silp_backend
-PGPASSWORD='tu_contraseña' psql -d db_provida_uf -U tu_usuario -f add_is_active_mdv_columns.sql
+psql -U postgres -d db_provida_uf -f add_is_active_mdv_columns.sql
 ```
 
-Este script agregará las columnas con valores por defecto apropiados.
+### 4. Configurar Variables de Entorno del Backend
 
-### 4. Configurar Variables de Entorno
+El archivo `.env.example` contiene todas las variables necesarias. Después de copiarlo a `.env`, edítalo con tus valores:
 
-Crea un archivo `.env` en `silp_backend/` con el siguiente contenido:
+**Variables críticas a configurar:**
 
-```env
-DATABASE_URL=postgresql://usuario:contraseña@localhost:5432/db_provida_uf
-SECRET_KEY=tu-clave-secreta-super-segura-aqui
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=30
-PASSWORD_RESET_TOKEN_EXPIRE_MINUTES=60
+- `DATABASE_URL`: URL de conexión a PostgreSQL
+- `SECRET_KEY`: Clave secreta para JWT (genera una segura: `python -c "import secrets; print(secrets.token_urlsafe(32))"`)
+- `MAIL_*`: Configuración SMTP para correos (usa Mailtrap para desarrollo)
 
-# Configuración de correo (para recuperación de contraseña)
-MAIL_USERNAME=tu-usuario-mailtrap
-MAIL_PASSWORD=tu-contraseña-mailtrap
-MAIL_FROM=tu-email@ejemplo.com
-MAIL_PORT=587
-MAIL_SERVER=smtp.mailtrap.io
-MAIL_FROM_NAME=SILP Sistema
-```
-
-### 5. Configurar el Frontend
+### 5. Configurar Frontend
 
 ```bash
 # Desde la raíz del proyecto SILP:
@@ -194,57 +194,92 @@ cd silp-frontend
 
 # Instalar dependencias
 npm install
+
+# Configurar variables de entorno
+cp .env.example .env
+# Verificar que VITE_API_URL apunte al backend (http://127.0.0.1:8000)
 ```
 
-## ⚙️ Configuración
+**Nota**: Todas las variables de entorno en el frontend deben tener el prefijo `VITE_` para ser accesibles en el código.
+
+## ⚙️ Configuración Detallada
 
 ### Variables de Entorno del Backend
 
-El archivo `.env` debe contener:
+Consulta `silp_backend/.env.example` para ver todas las variables disponibles. Las más importantes son:
 
-- `DATABASE_URL`: URL de conexión a PostgreSQL
-- `SECRET_KEY`: Clave secreta para firmar tokens JWT (debe ser segura)
-- `ALGORITHM`: Algoritmo de encriptación (HS256)
-- `ACCESS_TOKEN_EXPIRE_MINUTES`: Tiempo de expiración del token de acceso (por defecto: 30 minutos)
-- `PASSWORD_RESET_TOKEN_EXPIRE_MINUTES`: Tiempo de expiración del token de recuperación (por defecto: 60 minutos)
-- `MAIL_*`: Configuración del servidor de correo
+- **`DATABASE_URL`**: URL de conexión a PostgreSQL
+- **`SECRET_KEY`**: Clave secreta para firmar tokens JWT (debe ser segura, mínimo 32 caracteres)
+- **`ALGORITHM`**: Algoritmo de encriptación (HS256 por defecto)
+- **`ACCESS_TOKEN_EXPIRE_MINUTES`**: Tiempo de expiración del token de acceso (30 minutos por defecto)
+- **`PASSWORD_RESET_TOKEN_EXPIRE_MINUTES`**: Tiempo de expiración del token de recuperación (60 minutos por defecto)
+- **`MAIL_*`**: Configuración del servidor SMTP para correos electrónicos
+- **`CORS_ORIGINS`**: URLs permitidas para peticiones CORS (separadas por comas)
+- **`FRONTEND_URL`**: URL del frontend para links en correos
+
+### Variables de Entorno del Frontend
+
+Consulta `silp-frontend/.env.example` para ver todas las variables disponibles:
+
+- **`VITE_API_URL`**: URL del backend FastAPI (http://127.0.0.1:8000 en desarrollo)
+- **`VITE_APP_NAME`**: Nombre de la aplicación
+- **`VITE_ENV`**: Entorno (development | production)
+
+**Importante**: Todas las variables del frontend deben tener el prefijo `VITE_` para ser accesibles en el código.
 
 ### Configuración de CORS
 
-El backend está configurado para aceptar peticiones desde:
+El backend está configurado para aceptar peticiones desde las URLs especificadas en `CORS_ORIGINS` en el archivo `.env`. Por defecto incluye:
 - `http://localhost:5173` (Vite por defecto)
 - `http://localhost:3000` (alternativa)
 
-Si usas otro puerto, modifica `main.py` en el backend.
+Para producción, actualiza `CORS_ORIGINS` con las URLs de tu dominio.
 
 ## 🎯 Uso
 
-### Iniciar el Backend
+### 6. Iniciar el Backend
 
 ```bash
-# Desde la raíz del proyecto SILP:
+# Desde silp_backend:
 cd silp_backend
-source venv/bin/activate  # En Windows: venv\Scripts\activate
+
+# Asegúrate de tener el entorno virtual activado
+# En Mac/Linux:
+source venv/bin/activate
+# En Windows:
+venv\Scripts\activate
+
+# Ejecutar el servidor
 uvicorn app.main:app --reload
 ```
 
 El backend estará disponible en `http://127.0.0.1:8000`
 
-### Iniciar el Frontend
+**Documentación de la API:**
+- **Swagger UI**: `http://127.0.0.1:8000/docs`
+- **ReDoc**: `http://127.0.0.1:8000/redoc`
+
+### 7. Iniciar el Frontend
 
 ```bash
-# Desde la raíz del proyecto SILP:
+# Desde silp-frontend:
 cd silp-frontend
+
+# Ejecutar el servidor de desarrollo
 npm run dev
 ```
 
 El frontend estará disponible en `http://localhost:5173`
 
-### Acceder a la Documentación de la API
+### 8. Acceso Inicial
 
-Una vez iniciado el backend, puedes acceder a:
-- **Swagger UI**: `http://127.0.0.1:8000/docs`
-- **ReDoc**: `http://127.0.0.1:8000/redoc`
+Una vez que ambos servidores estén corriendo:
+
+1. Abre el navegador en `http://localhost:5173`
+2. Inicia sesión con las credenciales de un usuario existente en la base de datos
+3. Si no tienes usuarios, créalos manualmente en la base de datos o usa el endpoint de creación de usuarios (requiere autenticación de superadmin)
+
+**Nota**: Para crear el primer usuario superadmin, puedes usar un script SQL o el endpoint `/api/v1/users/` si ya tienes acceso.
 
 ## 📁 Estructura del Proyecto
 
@@ -346,7 +381,7 @@ Para preguntas o soporte, contacta al equipo de desarrollo.
 
 ---
 
-**Última actualización**: 14 de noviembre de 2025
+**Última actualización**: 16 de noviembre de 2025
 
 **Desarrollado con ❤️ para la gestión eficiente de contactos y líderes**
 

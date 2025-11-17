@@ -1,5 +1,7 @@
 # Arquitectura del Sistema SILP
 
+> **Última actualización**: 16 de noviembre de 2025
+
 Este documento describe en detalle la arquitectura, diseño y decisiones técnicas del sistema SILP.
 
 ## 📐 Visión General de la Arquitectura
@@ -497,6 +499,6 @@ Configurado para permitir:
 
 ---
 
-**Última actualización**: 14 de noviembre de 2025
+**Última actualización**: 16 de noviembre de 2025
 
 
