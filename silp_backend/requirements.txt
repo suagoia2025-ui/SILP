@@ -1,0 +1,104 @@
+# ============================================================================
+# SILP Backend - Requirements
+# Sistema de Integración de Líderes Privada
+# ============================================================================
+# 
+# Instalación:
+#   pip install -r requirements.txt
+#
+# Para desarrollo con hot-reload:
+#   uvicorn app.main:app --reload
+#
+# ============================================================================
+
+# ============================================================================
+# Web Framework & Server
+# ============================================================================
+# FastAPI: Framework web moderno y rápido para Python
+fastapi==0.121.2
+
+# Uvicorn: Servidor ASGI de alto rendimiento
+# [standard] incluye dependencias adicionales para mejor rendimiento
+uvicorn[standard]==0.38.0
+
+# ============================================================================
+# Database
+# ============================================================================
+# SQLAlchemy: ORM para gestión de base de datos
+sqlalchemy==2.0.44
+
+# psycopg2-binary: Driver PostgreSQL (versión binaria, más fácil de instalar)
+psycopg2-binary==2.9.11
+
+# ============================================================================
+# Authentication & Security
+# ============================================================================
+# python-jose: Implementación de JWT (JSON Web Tokens)
+# [cryptography] incluye soporte criptográfico mejorado
+python-jose[cryptography]==3.5.0
+
+# bcrypt: Biblioteca para hash de contraseñas (usado directamente, no via passlib)
+bcrypt==5.0.0
+
+# ============================================================================
+# Data Validation
+# ============================================================================
+# Pydantic: Validación de datos y serialización
+# [email] incluye validación de EmailStr
+pydantic[email]==2.12.4
+
+# pydantic-settings: Configuración basada en Pydantic
+pydantic-settings==2.12.0
+
+# ============================================================================
+# Email
+# ============================================================================
+# fastapi-mail: Integración de correo electrónico para FastAPI
+fastapi-mail==1.5.8
+
+# ============================================================================
+# File Processing
+# ============================================================================
+# Pandas: Procesamiento y análisis de datos (CSV, Excel)
+pandas==2.3.3
+
+# openpyxl: Soporte para leer/escribir archivos Excel (.xlsx)
+# Requerido por pandas para pd.read_excel()
+openpyxl==3.1.5
+
+# ============================================================================
+# Environment & Configuration
+# ============================================================================
+# python-dotenv: Carga variables de entorno desde archivo .env
+python-dotenv==1.2.1
+
+# ============================================================================
+# File Upload
+# ============================================================================
+# python-multipart: Soporte para formularios multipart (UploadFile en FastAPI)
+python-multipart==0.0.20
+
+# ============================================================================
+# Dependencias Transitorias (incluidas automáticamente)
+# ============================================================================
+# Las siguientes dependencias se instalan automáticamente como dependencias
+# de los paquetes principales, pero se listan aquí para referencia:
+#
+# - cryptography: Para python-jose[cryptography] y fastapi-mail
+# - bcrypt: Para hash de contraseñas (usado directamente)
+# - email-validator: Para pydantic[email]
+# - aiofiles: Para fastapi-mail
+# - httptools, uvloop, watchfiles: Para uvicorn[standard] (mejor rendimiento)
+# - click: Para uvicorn CLI
+# - h11: Para uvicorn (protocolo HTTP)
+# - typing-extensions: Para compatibilidad de tipos
+# - numpy: Para pandas
+# - pytz, python-dateutil, tzdata: Para pandas (manejo de zonas horarias)
+# - starlette: Para FastAPI (framework base)
+# - anyio: Para Starlette (async I/O)
+# - annotated-types, typing-inspection: Para Pydantic
+# - jinja2, markupsafe: Para fastapi-mail (templates)
+# - dnspython, idna: Para email-validator
+# - websockets: Para uvicorn[standard] (WebSocket support)
+# - pyyaml: Para uvicorn[standard] (configuración YAML)
+

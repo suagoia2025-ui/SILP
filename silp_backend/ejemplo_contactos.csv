@@ -1,0 +1,6 @@
+first_name,last_name,cedula,email,phone,address,municipality_id,occupation_id,mdv,is_active
+Juan,Pérez,1234567890,juan.perez@example.com,3001234567,Calle 123 #45-67,3,1,REF-001,true
+María,González,2345678901,maria.gonzalez@example.com,3002345678,Avenida Principal 89,3,2,REF-002,true
+Carlos,Rodríguez,3456789012,carlos.rodriguez@example.com,3003456789,Carrera 50 #30-20,6,,REF-003,false
+Ana,Martínez,4567890123,ana.martinez@example.com,3004567890,Transversal 10 #5-10,6,3,REF-004,true
+
