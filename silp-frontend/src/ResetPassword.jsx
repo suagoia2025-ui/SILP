@@ -38,18 +38,78 @@ function ResetPassword() {
   };
 
   return (
-    <Container component="main" maxWidth="xs">
-      <Box sx={{ marginTop: 8, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <Typography component="h1" variant="h5">Establecer Nueva Contraseña</Typography>
-        <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
-          <TextField margin="normal" required fullWidth name="password" label="Nueva Contraseña" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-          <TextField margin="normal" required fullWidth name="confirmPassword" label="Confirmar Nueva Contraseña" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
-          <Button type="submit" fullWidth variant="contained" sx={{ mt: 3, mb: 2 }}>Actualizar Contraseña</Button>
-          {message && <Alert severity="success">{message}</Alert>}
-          {error && <Alert severity="error">{error}</Alert>}
+    <Box
+      sx={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        minHeight: '100vh',
+        width: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#f5f5f5',
+        margin: 0,
+        padding: 2
+      }}
+    >
+      <Container maxWidth="sm" sx={{ width: '100%' }}>
+        <Box
+          sx={{
+            backgroundColor: 'white',
+            padding: { xs: 3, sm: 4 },
+            borderRadius: 2,
+            boxShadow: 3,
+            width: '100%'
+          }}
+        >
+          <Typography variant="h4" component="h1" gutterBottom align="center">
+            Establecer Nueva Contraseña
+          </Typography>
+          
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }} align="center">
+            Ingresa tu nueva contraseña y confírmala para completar el restablecimiento.
+          </Typography>
+
+          <Box component="form" onSubmit={handleSubmit} noValidate>
+            <TextField 
+              margin="normal" 
+              required 
+              fullWidth 
+              name="password" 
+              label="Nueva Contraseña" 
+              type="password" 
+              value={password} 
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="new-password"
+            />
+            <TextField 
+              margin="normal" 
+              required 
+              fullWidth 
+              name="confirmPassword" 
+              label="Confirmar Nueva Contraseña" 
+              type="password" 
+              value={confirmPassword} 
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              autoComplete="new-password"
+            />
+            <Button 
+              type="submit" 
+              fullWidth 
+              variant="contained" 
+              sx={{ mt: 3, mb: 2 }}
+            >
+              Actualizar Contraseña
+            </Button>
+            {message && <Alert severity="success" sx={{ mt: 2 }}>{message}</Alert>}
+            {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
+          </Box>
         </Box>
-      </Box>
-    </Container>
+      </Container>
+    </Box>
   );
 }
 export default ResetPassword;
