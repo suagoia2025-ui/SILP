@@ -239,19 +239,20 @@ const NetworkFlow = memo(({
       minZoom={0.1}
       maxZoom={4}
     >
-      <Background color="#aaa" gap={16} />
+      <Background color="#f5f5f5" gap={16} />
       <Controls />
-      {showMiniMap && (
-        <MiniMap
-          nodeColor={(node) => getNodeColor(node)}
-          maskColor="rgba(0, 0, 0, 0.1)"
-          style={{
-            backgroundColor: '#f5f5f5',
-            width: 150,
-            height: 100,
-          }}
-        />
-      )}
+        {showMiniMap && (
+          <MiniMap
+            nodeColor={(node) => getNodeColor(node)}
+            maskColor="rgba(0, 0, 0, 0.1)"
+            style={{
+              backgroundColor: '#ffffff',
+              width: 150,
+              height: 100,
+              border: '1px solid #e0e0e0',
+            }}
+          />
+        )}
     </ReactFlow>
   );
 });
