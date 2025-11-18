@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from starlette.middleware.base import BaseHTTPMiddleware
 import os
 import logging
 from .routers import auth, users, contacts, password_recovery, municipalities, occupations, admin, network
