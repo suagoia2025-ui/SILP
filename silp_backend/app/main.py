@@ -54,66 +54,20 @@ def is_origin_allowed(origin: str) -> bool:
     
     return False
 
-# Configurar CORS: usar regex para vercel.app si hay dominios de vercel
-has_vercel_domains = any(o.endswith(".vercel.app") for o in origins)
-vercel_regex = r"https://.*\.vercel\.app" if has_vercel_domains else None
-
-# Separar origins
-non_vercel_origins = [o for o in origins if not o.endswith(".vercel.app")]
-
-# Configurar middleware CORS
-# Si hay dominios de vercel, usar regex (acepta todos los *.vercel.app)
-# También incluir otros origins si existen
-if vercel_regex and non_vercel_origins:
-    # Tanto regex como lista de origins
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origin_regex=vercel_regex,
-        allow_origins=non_vercel_origins,
-        allow_credentials=True,
-        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-        allow_headers=["*"],
-        expose_headers=["*"],
-        max_age=3600,
-    )
-    logger.info(f"✅ CORS: regex vercel.app + origins: {non_vercel_origins}")
-elif vercel_regex:
-    # Solo regex para vercel.app
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origin_regex=vercel_regex,
-        allow_credentials=True,
-        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-        allow_headers=["*"],
-        expose_headers=["*"],
-        max_age=3600,
-    )
-    logger.info(f"✅ CORS: solo regex vercel.app")
-else:
-    # Solo lista de origins
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=origins,
-        allow_credentials=True,
-        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-        allow_headers=["*"],
-        expose_headers=["*"],
-        max_age=3600,
-    )
-    logger.info(f"✅ CORS: lista de origins: {origins}")
-
-# Middleware personalizado para manejar CORS en todas las respuestas
-# Este middleware se ejecuta ANTES que el CORSMiddleware para asegurar headers CORS
+# Middleware personalizado para manejar CORS PRIMERO
+# En FastAPI, los middlewares se ejecutan en orden inverso, así que este se ejecutará DESPUÉS
+# Pero interceptamos OPTIONS antes de que llegue a CORSMiddleware
 @app.middleware("http")
-async def cors_middleware(request: Request, call_next):
+async def cors_middleware_custom(request: Request, call_next):
     """
-    Middleware personalizado para asegurar que todas las respuestas tengan headers CORS.
-    Acepta cualquier origen de vercel.app automáticamente.
+    Middleware personalizado que maneja CORS, especialmente OPTIONS.
+    Acepta automáticamente cualquier origen de vercel.app.
     """
     origin = request.headers.get("origin")
     
     # Si es una petición OPTIONS (preflight), manejarla directamente
     if request.method == "OPTIONS":
+        # Aceptar cualquier origen de vercel.app o origins configurados
         if origin and (origin.endswith(".vercel.app") or is_origin_allowed(origin)):
             logger.info(f"✅ OPTIONS preflight permitido para: {origin}")
             return Response(
@@ -126,10 +80,14 @@ async def cors_middleware(request: Request, call_next):
                     "Access-Control-Max-Age": "3600",
                 }
             )
+        else:
+            logger.warning(f"⚠️  OPTIONS bloqueado para: {origin}")
+            return Response(status_code=403)
     
-    # Para otras peticiones, agregar headers CORS si el origen está permitido
+    # Para otras peticiones, continuar y agregar headers después
     response = await call_next(request)
     
+    # Agregar headers CORS si el origen está permitido
     if origin and (origin.endswith(".vercel.app") or is_origin_allowed(origin)):
         response.headers["Access-Control-Allow-Origin"] = origin
         response.headers["Access-Control-Allow-Credentials"] = "true"
@@ -140,6 +98,50 @@ async def cors_middleware(request: Request, call_next):
         logger.warning(f"⚠️  Origen no permitido: {origin}")
     
     return response
+
+# Configurar CORS: usar regex para vercel.app si hay dominios de vercel
+has_vercel_domains = any(o.endswith(".vercel.app") for o in origins)
+vercel_regex = r"https://.*\.vercel\.app" if has_vercel_domains else None
+
+# Separar origins
+non_vercel_origins = [o for o in origins if not o.endswith(".vercel.app")]
+
+# Configurar middleware CORS de FastAPI (como backup)
+# Si hay dominios de vercel, usar regex (acepta todos los *.vercel.app)
+if vercel_regex and non_vercel_origins:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origin_regex=vercel_regex,
+        allow_origins=non_vercel_origins,
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+        allow_headers=["*"],
+        expose_headers=["*"],
+        max_age=3600,
+    )
+    logger.info(f"✅ CORS: regex vercel.app + origins: {non_vercel_origins}")
+elif vercel_regex:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origin_regex=vercel_regex,
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+        allow_headers=["*"],
+        expose_headers=["*"],
+        max_age=3600,
+    )
+    logger.info(f"✅ CORS: solo regex vercel.app")
+else:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins,
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+        allow_headers=["*"],
+        expose_headers=["*"],
+        max_age=3600,
+    )
+    logger.info(f"✅ CORS: lista de origins: {origins}")
 
 # Handler explícito para OPTIONS (preflight requests)
 @app.options("/{full_path:path}")
