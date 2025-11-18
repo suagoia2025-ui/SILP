@@ -67,6 +67,7 @@ if vercel_regex:
         expose_headers=["*"],
         max_age=3600,
     )
+    print(f"✅ CORS configurado con regex para vercel.app: {vercel_regex}")
 else:
     # Usar solo lista de origins
     app.add_middleware(
@@ -78,6 +79,33 @@ else:
         expose_headers=["*"],
         max_age=3600,
     )
+    print(f"✅ CORS configurado con lista de origins: {origins}")
+
+# Middleware personalizado para manejar CORS en todas las respuestas
+@app.middleware("http")
+async def cors_middleware(request: Request, call_next):
+    """
+    Middleware personalizado para asegurar que todas las respuestas tengan headers CORS.
+    Esto es un backup en caso de que el CORSMiddleware no funcione correctamente.
+    """
+    origin = request.headers.get("origin")
+    
+    # Verificar si el origen está permitido
+    if origin and is_origin_allowed(origin):
+        response = await call_next(request)
+        # Agregar headers CORS a todas las respuestas
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+        response.headers["Access-Control-Allow-Headers"] = "*"
+        return response
+    else:
+        # Si no hay origin o no está permitido, continuar normalmente
+        # El CORSMiddleware se encargará de rechazarlo si es necesario
+        response = await call_next(request)
+        if origin:
+            print(f"⚠️  Origen no permitido en middleware: {origin}")
+        return response
 
 # Handler explícito para OPTIONS (preflight requests)
 @app.options("/{full_path:path}")
@@ -87,9 +115,11 @@ async def options_handler(request: Request, full_path: str):
     Esto asegura que todas las rutas respondan correctamente a preflight requests.
     """
     origin = request.headers.get("origin")
+    print(f"🔍 OPTIONS request desde: {origin}")
     
     # Verificar si el origen está permitido
     if origin and is_origin_allowed(origin):
+        print(f"✅ Origen permitido: {origin}")
         return Response(
             status_code=200,
             headers={
@@ -102,7 +132,8 @@ async def options_handler(request: Request, full_path: str):
         )
     else:
         # Si el origen no está permitido, retornar 403
-        print(f"⚠️  Origen bloqueado: {origin}")
+        print(f"⚠️  Origen bloqueado en OPTIONS: {origin}")
+        print(f"🔍 Origins permitidos: {origins}")
         return Response(status_code=403)
 
 # Esta es la línea que usa el 'router' del otro archivo
