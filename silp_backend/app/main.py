@@ -112,9 +112,8 @@ class CustomCORSMiddleware(BaseHTTPMiddleware):
         
         return response
 
-# Agregar el middleware personalizado PRIMERO (se ejecutará antes del CORSMiddleware)
-app.add_middleware(CustomCORSMiddleware)
-
+# IMPORTANTE: En FastAPI, los middlewares se ejecutan en orden INVERSO
+# Por lo tanto, agregamos CustomCORSMiddleware DESPUÉS para que se ejecute PRIMERO
 # Configurar CORS: usar regex para vercel.app si hay dominios de vercel
 has_vercel_domains = any(o.endswith(".vercel.app") for o in origins)
 vercel_regex = r"https://.*\.vercel\.app" if has_vercel_domains else None
@@ -158,6 +157,22 @@ else:
         max_age=3600,
     )
     logger.info(f"✅ CORS: lista de origins: {origins}")
+
+# Agregar el middleware personalizado AL FINAL para que se ejecute PRIMERO
+# (FastAPI ejecuta middlewares en orden inverso)
+app.add_middleware(CustomCORSMiddleware)
+
+# Endpoint de prueba para verificar que el código se desplegó
+@app.get("/health/cors-test")
+async def cors_test(request: Request):
+    """Endpoint para verificar que CORS está funcionando"""
+    origin = request.headers.get("origin", "no origin")
+    return {
+        "status": "ok",
+        "origin_received": origin,
+        "is_vercel": origin.endswith(".vercel.app") if origin else False,
+        "message": "Si ves esto, el código se desplegó correctamente"
+    }
 
 # Handler explícito para OPTIONS (preflight requests)
 @app.options("/{full_path:path}")
