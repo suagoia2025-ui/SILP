@@ -16,10 +16,13 @@ origins = [origin.strip() for origin in cors_origins_str.split(",") if origin.st
 print(f"🔍 CORS Origins configurados: {origins}")
 print(f"🔍 CORS_ORIGINS variable: {cors_origins_str}")
 
-# Si no hay origins configurados, usar wildcard temporalmente para debugging
+# Si no hay origins configurados, agregar URL de Vercel por defecto
 if not origins:
-    print("⚠️  ADVERTENCIA: CORS_ORIGINS no configurado, usando wildcard (solo para debugging)")
-    origins = ["*"]
+    print("⚠️  ADVERTENCIA: CORS_ORIGINS no configurado")
+    print("💡 Agrega CORS_ORIGINS=https://silp-taupe.vercel.app en Railway")
+    # No usar wildcard porque allow_credentials=True no es compatible
+    # En su lugar, usar un origen por defecto común
+    origins = ["https://silp-taupe.vercel.app", "http://localhost:3000", "http://localhost:5173"]
 
 app.add_middleware(
     CORSMiddleware,
@@ -41,7 +44,7 @@ async def options_handler(request: Request, full_path: str):
     origin = request.headers.get("origin")
     
     # Verificar si el origen está permitido
-    if origin and (origin in origins or "*" in origins):
+    if origin and origin in origins:
         return Response(
             status_code=200,
             headers={
