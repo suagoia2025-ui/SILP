@@ -55,49 +55,48 @@ def is_origin_allowed(origin: str) -> bool:
     return False
 
 # Middleware personalizado para manejar CORS PRIMERO
-# En FastAPI, los middlewares se ejecutan en orden inverso, así que este se ejecutará DESPUÉS
-# Pero interceptamos OPTIONS antes de que llegue a CORSMiddleware
-@app.middleware("http")
-async def cors_middleware_custom(request: Request, call_next):
-    """
-    Middleware personalizado que maneja CORS, especialmente OPTIONS.
-    Acepta automáticamente cualquier origen de vercel.app.
-    """
-    origin = request.headers.get("origin")
-    
-    # Si es una petición OPTIONS (preflight), manejarla directamente
-    if request.method == "OPTIONS":
-        # Aceptar cualquier origen de vercel.app o origins configurados
+# Usamos BaseHTTPMiddleware y lo agregamos ANTES del CORSMiddleware
+# para interceptar OPTIONS antes de que llegue al CORSMiddleware
+class CustomCORSMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        origin = request.headers.get("origin")
+        
+        # Si es una petición OPTIONS (preflight), manejarla directamente
+        if request.method == "OPTIONS":
+            # Aceptar cualquier origen de vercel.app o origins configurados
+            if origin and (origin.endswith(".vercel.app") or is_origin_allowed(origin)):
+                logger.info(f"✅ OPTIONS preflight permitido para: {origin}")
+                return Response(
+                    status_code=200,
+                    headers={
+                        "Access-Control-Allow-Origin": origin,
+                        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH",
+                        "Access-Control-Allow-Headers": "*",
+                        "Access-Control-Allow-Credentials": "true",
+                        "Access-Control-Max-Age": "3600",
+                    }
+                )
+            else:
+                logger.warning(f"⚠️  OPTIONS bloqueado para: {origin}")
+                return Response(status_code=403)
+        
+        # Para otras peticiones, continuar y agregar headers después
+        response = await call_next(request)
+        
+        # Agregar headers CORS si el origen está permitido
         if origin and (origin.endswith(".vercel.app") or is_origin_allowed(origin)):
-            logger.info(f"✅ OPTIONS preflight permitido para: {origin}")
-            return Response(
-                status_code=200,
-                headers={
-                    "Access-Control-Allow-Origin": origin,
-                    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH",
-                    "Access-Control-Allow-Headers": "*",
-                    "Access-Control-Allow-Credentials": "true",
-                    "Access-Control-Max-Age": "3600",
-                }
-            )
-        else:
-            logger.warning(f"⚠️  OPTIONS bloqueado para: {origin}")
-            return Response(status_code=403)
-    
-    # Para otras peticiones, continuar y agregar headers después
-    response = await call_next(request)
-    
-    # Agregar headers CORS si el origen está permitido
-    if origin and (origin.endswith(".vercel.app") or is_origin_allowed(origin)):
-        response.headers["Access-Control-Allow-Origin"] = origin
-        response.headers["Access-Control-Allow-Credentials"] = "true"
-        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
-        response.headers["Access-Control-Allow-Headers"] = "*"
-        logger.info(f"✅ Headers CORS agregados para: {origin}")
-    elif origin:
-        logger.warning(f"⚠️  Origen no permitido: {origin}")
-    
-    return response
+            response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers["Access-Control-Allow-Credentials"] = "true"
+            response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+            response.headers["Access-Control-Allow-Headers"] = "*"
+            logger.info(f"✅ Headers CORS agregados para: {origin}")
+        elif origin:
+            logger.warning(f"⚠️  Origen no permitido: {origin}")
+        
+        return response
+
+# Agregar el middleware personalizado PRIMERO (se ejecutará antes del CORSMiddleware)
+app.add_middleware(CustomCORSMiddleware)
 
 # Configurar CORS: usar regex para vercel.app si hay dominios de vercel
 has_vercel_domains = any(o.endswith(".vercel.app") for o in origins)
