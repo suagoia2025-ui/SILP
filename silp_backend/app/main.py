@@ -103,31 +103,43 @@ else:
     logger.info(f"✅ CORS: lista de origins: {origins}")
 
 # Middleware personalizado para manejar CORS en todas las respuestas
+# Este middleware se ejecuta ANTES que el CORSMiddleware para asegurar headers CORS
 @app.middleware("http")
 async def cors_middleware(request: Request, call_next):
     """
     Middleware personalizado para asegurar que todas las respuestas tengan headers CORS.
-    Esto es un backup en caso de que el CORSMiddleware no funcione correctamente.
+    Acepta cualquier origen de vercel.app automáticamente.
     """
     origin = request.headers.get("origin")
     
-    # Verificar si el origen está permitido
-    if origin and is_origin_allowed(origin):
-        response = await call_next(request)
-        # Agregar headers CORS a todas las respuestas
+    # Si es una petición OPTIONS (preflight), manejarla directamente
+    if request.method == "OPTIONS":
+        if origin and (origin.endswith(".vercel.app") or is_origin_allowed(origin)):
+            logger.info(f"✅ OPTIONS preflight permitido para: {origin}")
+            return Response(
+                status_code=200,
+                headers={
+                    "Access-Control-Allow-Origin": origin,
+                    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH",
+                    "Access-Control-Allow-Headers": "*",
+                    "Access-Control-Allow-Credentials": "true",
+                    "Access-Control-Max-Age": "3600",
+                }
+            )
+    
+    # Para otras peticiones, agregar headers CORS si el origen está permitido
+    response = await call_next(request)
+    
+    if origin and (origin.endswith(".vercel.app") or is_origin_allowed(origin)):
         response.headers["Access-Control-Allow-Origin"] = origin
         response.headers["Access-Control-Allow-Credentials"] = "true"
         response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
         response.headers["Access-Control-Allow-Headers"] = "*"
-        return response
-    else:
-        # Si no hay origin o no está permitido, continuar normalmente
-        # El CORSMiddleware se encargará de rechazarlo si es necesario
-        response = await call_next(request)
-        if origin:
-            logger.warning(f"⚠️  Origen no permitido en middleware: {origin}")
-            print(f"⚠️  Origen no permitido en middleware: {origin}")
-        return response
+        logger.info(f"✅ Headers CORS agregados para: {origin}")
+    elif origin:
+        logger.warning(f"⚠️  Origen no permitido: {origin}")
+    
+    return response
 
 # Handler explícito para OPTIONS (preflight requests)
 @app.options("/{full_path:path}")
