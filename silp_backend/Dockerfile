@@ -65,5 +65,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
 
 # Comando por defecto: ejecutar uvicorn
 # Usar 0.0.0.0 para escuchar en todas las interfaces (necesario en Docker)
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Railway inyecta $PORT automáticamente, usar 8000 como fallback
+# Usar formato shell para que ${PORT} se resuelva en runtime
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
 
