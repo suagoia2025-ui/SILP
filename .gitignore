@@ -95,3 +95,6 @@ htmlcov/
 .mypy_cache/
 .dmypy.json
 dmypy.json
+
+# Utility scripts (may contain sensitive data)
+silp_backend/hash_pass.py

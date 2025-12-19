@@ -2,8 +2,10 @@ from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.exceptions import HTTPException as StarletteHTTPException
 import os
 import logging
+import traceback
 from .routers import auth, users, contacts, password_recovery, municipalities, occupations, admin, network
 
 # Configurar logging para que se vea en Railway
@@ -216,6 +218,51 @@ app.include_router(municipalities.router, prefix="/api/v1")
 app.include_router(occupations.router, prefix="/api/v1")
 app.include_router(admin.router, prefix="/api/v1")
 app.include_router(network.router, prefix="/api/v1", tags=["Network"])
+
+# Exception handler global para asegurar que TODAS las respuestas incluyan headers CORS
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    """
+    Maneja todas las excepciones y asegura que los headers CORS estén presentes
+    incluso en respuestas de error.
+    """
+    origin = request.headers.get("origin")
+    
+    # Función helper para verificar si el origen está permitido
+    def is_allowed(orig: str) -> bool:
+        if not orig:
+            return False
+        if orig.endswith(".vercel.app"):
+            return True
+        if orig.startswith("http://localhost:") or orig.startswith("https://localhost:"):
+            return True
+        return is_origin_allowed(orig)
+    
+    # Determinar el código de estado y mensaje
+    if isinstance(exc, StarletteHTTPException):
+        status_code = exc.status_code
+        detail = exc.detail
+    else:
+        status_code = 500
+        detail = "Error interno del servidor"
+        logger.error(f"❌ Excepción no manejada: {type(exc).__name__}: {str(exc)}")
+        logger.error(traceback.format_exc())
+    
+    # Crear respuesta JSON con el error
+    response = JSONResponse(
+        status_code=status_code,
+        content={"detail": detail}
+    )
+    
+    # Agregar headers CORS si el origen está permitido
+    if is_allowed(origin):
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+        response.headers["Access-Control-Allow-Headers"] = "*"
+        logger.info(f"✅ Headers CORS agregados a respuesta de error para: {origin}")
+    
+    return response
 
 @app.get("/")
 def read_root():

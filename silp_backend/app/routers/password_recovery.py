@@ -1,6 +1,7 @@
 # app/routers/password_recovery.py
 from fastapi import APIRouter, Depends, HTTPException, status, Body
 from sqlalchemy.orm import Session
+import logging
 
 from app import crud, schemas, security
 from app.database import get_db
@@ -8,6 +9,7 @@ from app.email_utils import send_email
 from app.security import get_password_hash
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 @router.post("/password-recovery", tags=["Password Recovery"])
 async def recover_password(email: str = Body(..., embed=True), db: Session = Depends(get_db)):
@@ -32,11 +34,18 @@ async def recover_password(email: str = Body(..., embed=True), db: Session = Dep
         <p>Si no solicitaste esto, por favor ignora este correo.</p>
         """
         
-        await send_email(
-            subject="Restablecimiento de Contraseña para SILP",
-            recipients=[user.email],
-            body=email_body
-        )
+        try:
+            await send_email(
+                subject="Restablecimiento de Contraseña para SILP",
+                recipients=[user.email],
+                body=email_body
+            )
+            logger.info(f"✅ Email de recuperación enviado a: {user.email}")
+        except Exception as e:
+            # Log el error pero no lo exponemos al usuario por seguridad
+            logger.error(f"❌ Error al enviar email de recuperación: {type(e).__name__}: {str(e)}")
+            # Por seguridad, devolvemos el mismo mensaje genérico
+            # En producción, podrías querer notificar al administrador
         
     return {"message": "Si existe una cuenta con este correo, se ha enviado un enlace para restablecer la contraseña."}
 
